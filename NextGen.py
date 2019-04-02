@@ -87,7 +87,7 @@ class Stats:
 
             fitness_scores = calc_fitness(population, weights)
             best_creature = population[fitness_scores.index(max(fitness_scores))]
-            print(f"FITTEST CREATURE : ", end="")
+            print(f"FITTEST CREATURE: ", end="")
             for i in range(len(best_creature)):
                 if i == 0:
                     print(f"{best_creature[i][1]} [Score: {max(fitness_scores):.2f}]", end=": [")
@@ -102,17 +102,9 @@ class Stats:
                 for human in humans:
                     trait.append(human[i + 1][1])
                 creature1.append(median(trait))
-            fitness = 0
+            fitness1 = 0
             for index in range(num_of_traits):
-                fitness += creature1[index] * weights[index]
-
-            print(f"Human Median [Score: {fitness:.2f}]: ", end="[")
-
-            for i in range(len(trait_list)):
-                if i == len(trait_list) - 1:
-                    print(f"{trait_list[i]}: {creature1[i]:.2f}]")
-                else:
-                    print(f"{trait_list[i]}: {creature1[i]:.2f}", end=", ")
+                fitness1 += creature1[index] * weights[index]
 
             creature2 = []
             for i in range(len(trait_list)):
@@ -120,16 +112,9 @@ class Stats:
                 for gritis in gritiss:
                     trait.append(gritis[i + 1][1])
                 creature2.append(median(trait))
-            fitness = 0
+            fitness2 = 0
             for index in range(num_of_traits):
-                fitness += creature2[index] * weights[index]
-
-            print(f"Gritis Median [Score: {fitness:.2f}]: ", end="[")
-            for i in range(len(trait_list)):
-                if i == len(trait_list) - 1:
-                    print(f"{trait_list[i]}: {creature2[i]:.2f}]")
-                else:
-                    print(f"{trait_list[i]}: {creature2[i]:.2f}", end=", ")
+                fitness2 += creature2[index] * weights[index]
 
             creature3 = []
             for i in range(len(trait_list)):
@@ -137,16 +122,55 @@ class Stats:
                 for drakonian in drakonians:
                     trait.append(drakonian[i + 1][1])
                 creature3.append(median(trait))
-            fitness = 0
+            fitness3 = 0
             for index in range(num_of_traits):
-                fitness += creature3[index] * weights[index]
+                fitness3 += creature3[index] * weights[index]
 
-            print(f"Drakonian Median [Score: {fitness:.2f}]: ", end="[")
-            for i in range(len(trait_list)):
-                if i == len(trait_list) - 1:
-                    print(f"{trait_list[i]}: {creature3[i]:.2f}]")
+            print("Medians")
+            final = [["Human"] + [fitness1] + creature1]
+            final.append(["Gritis"] + [fitness2] + creature2)
+            final.append(["Drakonian"] + [fitness3] + creature3)
+
+            traits = [
+                'Specie',
+                'ft',
+                'lbs',
+                'IQ',
+                'Speed',
+                'Stngth'
+            ]
+
+            species_name_len = 0
+            for species_name in ["Human", "Gritis", "Drakonian"]:
+                if species_name_len < len(species_name):
+                    species_name_len = len(species_name)
+
+            trait_max_len = species_name_len
+            for trait1 in final:
+                if trait_max_len < len(trait1):
+                    trait_max_len = len(trait1)
+
+            max_len = 0
+            for trait2 in traits:
+                if max_len < len(trait2):
+                    max_len = len(trait2)
+
+            for i in range(len(final[0])):
+                current_len = len(str(traits[i - 1]))
+                if i == 0:
+                    print(" " * len(traits[i - 1]), " " * (max_len - current_len), end=" ")
+                elif i == 1:
+                    print("Score", " " * ((max_len - current_len) + 1), end=" ")
                 else:
-                    print(f"{trait_list[i]}: {creature3[i]:.2f}", end=", ")
+                    print(f"{traits[i - 1]}", " " * (max_len - current_len), end=" ")
+                for a in range(len(final)):
+                    if i == 0:
+                        current_len = len(str(final[a][i]))
+                        print(f"{final[a][i]}", " " * (trait_max_len - current_len), end=" ")
+                    else:
+                        current_len = len(f"{final[a][i]:.2f}")
+                        print(f"{final[a][i]:.2f}", " " * (trait_max_len - current_len),  end=" ")
+                print()
 
     def counting(self, population, generation, print_at=10):
         human_count = 0
@@ -316,7 +340,7 @@ def select_fittest(population, fitness_scores):
         drakonian_medians.append(median(trait))
 
     for i in range(len(population) - len(fitter_population)):
-        fitter_population.append(new_blood(humans_medians, drakonian_medians, gritiss_medians))
+        fitter_population.append(new_blood(humans_medians, gritiss_medians, drakonian_medians))
     return fitter_population
 
 
