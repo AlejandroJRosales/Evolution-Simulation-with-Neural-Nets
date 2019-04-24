@@ -309,8 +309,7 @@ def select_fittest(population, fitness_scores, weights):
     # idk man
     for creature in range(len(population)):
         for trait in range(len(population[creature])):
-            if "nan" in population[creature][trait]:
-                print(population[creature][trait])
+            if trait != 0 and np.isnan(population[creature][trait][1]):
                 population.remove(creature)
 
     fitter_population = [population[fitness_scores.index(min(fitness_scores))]]
