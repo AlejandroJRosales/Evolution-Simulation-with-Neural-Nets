@@ -1,6 +1,6 @@
 import random
-from random import shuffle
 import numpy as np
+from random import shuffle
 
 
 species = [
@@ -13,9 +13,10 @@ trait_list = [
     'Weight',
     'IQ',
     'Speed',
-    'Power'
+    'Strength'
 ]
 tournament_size = 3
+pop_keep = .6
 prob_crossover = 0.8
 prob_mutation = 0.5
 num_of_traits = len(trait_list)
@@ -55,129 +56,141 @@ class Creatures:
 
 class Stats:
     def weights_summary(self, weights):
-        compilation1 = f"{trait_list[weights.index(max(weights))]} is key"
-        compilation2 = f"Weights rounded to two decimal places: "
+        print(trait_list[weights.index(max(weights))], "is key")
+        print(f"Weights rounded to four decimal places: ", end="")
         for i in range(len(trait_list)):
             if i == len(trait_list) - 1:
-                compilation2 += f"{trait_list[i]}: {weights[i]:.2f}"
+                print(f"{trait_list[i]}: {weights[i]:.4f}")
             else:
-                compilation2 += f"{trait_list[i]}: {weights[i]:.2f} : "
+                print(f"{trait_list[i]}: {weights[i]:.4f} - ", end="")
 
-        return compilation1, compilation2
+    def creatures_summary(self, population, weights, generation, print_every):
+        if generation % print_every == 0:
+            humans = []
+            gritiss = []
+            drakonians = []
+            for creature in population:
+                if creature[0][1] == species[0]:
+                    humans.append(creature)
+                elif creature[0][1] == species[1]:
+                    gritiss.append(creature)
+                else:
+                    drakonians.append(creature)
 
-    def creatures_summary(self, population, weights):
-        humans = []
-        gritiss = []
-        drakonians = []
+            humans, gritiss, drakonians = sorted(humans), sorted(gritiss), sorted(drakonians)
+
+            fitness_scores = calc_fitness(population, weights)
+            best_creature = population[fitness_scores.index(max(fitness_scores))]
+            print(f"FITTEST CREATURE: ", end="")
+            for i in range(len(best_creature)):
+                if i == 0:
+                    print(f"{best_creature[i][1]} [Score: {max(fitness_scores):.2f}]", end=": [")
+                elif i == len(best_creature) - 1:
+                    print(f"{best_creature[i][0]}: {best_creature[i][1]:.2f}]")
+                else:
+                    print(f"{best_creature[i][0]}: {best_creature[i][1]:.2f}", end=", ")
+
+            creature1 = []
+            for i in range(len(trait_list)):
+                trait = []
+                for human in humans:
+                    trait.append(human[i + 1][1])
+                creature1.append(np.median(trait))
+            fitness1 = 0
+            for index in range(num_of_traits):
+                fitness1 += creature1[index] * weights[index]
+
+            creature2 = []
+            for i in range(len(trait_list)):
+                trait = []
+                for gritis in gritiss:
+                    trait.append(gritis[i + 1][1])
+                creature2.append(np.median(trait))
+            fitness2 = 0
+            for index in range(num_of_traits):
+                fitness2 += creature2[index] * weights[index]
+
+            creature3 = []
+            for i in range(len(trait_list)):
+                trait = []
+                for drakonian in drakonians:
+                    trait.append(drakonian[i + 1][1])
+                creature3.append(np.median(trait))
+            fitness3 = 0
+            for index in range(num_of_traits):
+                fitness3 += creature3[index] * weights[index]
+
+            print("Medians")
+            final = [["Human"] + [fitness1] + creature1]
+            final.append(["Gritis"] + [fitness2] + creature2)
+            final.append(["Drakonian"] + [fitness3] + creature3)
+
+            traits = [
+                'Specie',
+                'ft',
+                'lbs',
+                'IQ',
+                'Speed',
+                'Stngth'
+            ]
+
+            species_name_len = 0
+            for species_name in ["Human", "Gritis", "Drakonian"]:
+                if species_name_len < len(species_name):
+                    species_name_len = len(species_name)
+
+            trait_max_len = species_name_len
+            for trait1 in final:
+                if trait_max_len < len(trait1):
+                    trait_max_len = len(trait1)
+
+            max_len = 0
+            for trait2 in traits:
+                if max_len < len(trait2):
+                    max_len = len(trait2)
+
+            for i in range(len(final[0])):
+                current_len = len(str(traits[i - 1]))
+                if i == 0:
+                    print(" " * len(traits[i - 1]), " " * (max_len - current_len), end=" ")
+                elif i == 1:
+                    print("Score", " " * ((max_len - current_len) + 1), end=" ")
+                else:
+                    print(f"{traits[i - 1]}", " " * (max_len - current_len), end=" ")
+                for a in range(len(final)):
+                    if i == 0:
+                        current_len = len(str(final[a][i]))
+                        print(f"{final[a][i]}", " " * (trait_max_len - current_len), end=" ")
+                    else:
+                        current_len = len(f"{final[a][i]:.2f}")
+                        print(f"{final[a][i]:.2f}", " " * (trait_max_len - current_len),  end=" ")
+                print()
+
+    def counting(self, population, generation, print_every=10):
+        human_count = 0
+        gritis_count = 0
+        drakonian_count = 0
         for creature in population:
             if creature[0][1] == species[0]:
-                humans.append(creature)
+                human_count += 1
             elif creature[0][1] == species[1]:
-                gritiss.append(creature)
+                gritis_count += 1
             else:
-                drakonians.append(creature)
-
-        humans, gritiss, drakonians = sorted(humans), sorted(gritiss), sorted(drakonians)
-
-        creature1 = []
-        for i in range(len(trait_list)):
-            trait = []
-            for human in humans:
-                trait.append(human[i + 1][1])
-            creature1.append(np.median(trait))
-        fitness1 = 0
-        for index in range(num_of_traits):
-            fitness1 += creature1[index] * weights[index]
-
-        creature2 = []
-        for i in range(len(trait_list)):
-            trait = []
-            for gritis in gritiss:
-                trait.append(gritis[i + 1][1])
-            creature2.append(np.median(trait))
-        fitness2 = 0
-        for index in range(num_of_traits):
-            fitness2 += creature2[index] * weights[index]
-
-        creature3 = []
-        for i in range(len(trait_list)):
-            trait = []
-            for drakonian in drakonians:
-                trait.append(drakonian[i + 1][1])
-            creature3.append(np.median(trait))
-        fitness3 = 0
-        for index in range(num_of_traits):
-            fitness3 += creature3[index] * weights[index]
-
-        final = [["Human"] + [fitness1] + creature1]
-        final.append(["Gritis"] + [fitness2] + creature2)
-        final.append(["Drakonian"] + [fitness3] + creature3)
-
-        traits = [
-            'Specie',
-            'ft',
-            'lbs',
-            'IQ',
-            'Speed',
-            'Stngth'
-        ]
-
-        species_name_len = 0
-        for species_name in species:
-            if species_name_len < len(species_name):
-                species_name_len = len(species_name)
-
-        trait_max_len = species_name_len
-        for trait1 in final:
-            if trait_max_len < len(trait1):
-                trait_max_len = len(trait1)
-
-        max_len = 0
-        for trait2 in traits:
-            if max_len < len(trait2):
-                max_len = len(trait2)
-
-        line2 = ""
-        line3 = []
-        for i in range(len(final[0])):
-            current_len = len(str(traits[i - 1]))
-            if i == 0:
-                line1 = (" " * len(traits[i - 1]) + " " * (max_len - current_len))
-            elif i == 1:
-                line2 += ("Score" + " " * ((max_len - current_len) + 1))
-            else:
-                line3.append(f"{traits[i - 1]}")
-            for a in range(len(final)):
-                if i == 0:
-                    current_len = len(str(final[a][i]))
-                    line1 += (f"{final[a][i]}" + " " * (trait_max_len - current_len))
-                else:
-                    current_len = len(f"{final[a][i]:.2f}")
-                    line3.append(" " * (max_len - current_len) + f"{final[a][i]:.2f}" + " " * (trait_max_len - current_len))
-
-        line4 = []
-        i = 0
-        while i < len(line3):
-            line4.append(line3[i] + line3[i + 1] + line3[i + 2])
-            i += 4
-
-        return line1, line2, line4
-
-    def counting(self, population):
-        human_count, gritis_count, drakonian_count = count_species(population)
+                drakonian_count += 1
 
         dom_proportion = max(drakonian_count, max(human_count, gritis_count)) / len(population)
         dom_species = species[[human_count, gritis_count, drakonian_count].index(max(drakonian_count, max(human_count, gritis_count)))]
-        compilation1 = f"DOMINATING SPECIES: {dom_species} - Proportion of {dom_species}s: {dom_proportion * 100:.2f}%"
         if human_count == 0:
             human_count = "Extinct"
         if gritis_count == 0:
             gritis_count = "Extinct"
         if drakonian_count == 0:
             drakonian_count = "Extinct"
-        compilation2 = f"{human_count} {species[0]}       {gritis_count} {species[1]}       {drakonian_count} {species[2]}       {len(population)} creatures"
-
-        return compilation1, compilation2
+        if generation % print_every == 0:
+            print(f"Gen {generation} |")
+            print(f"DOMINATING SPECIES: {dom_species} - Proportion of {dom_species}s: {dom_proportion * 100:.2f}%", end=" - ")
+            print(
+                f"counts=(Human: {human_count}, Gritis: {gritis_count}, Drakonian: {drakonian_count}) - {len(population)} creatures")
 
 
 def generate_population(num_of_creatures):
