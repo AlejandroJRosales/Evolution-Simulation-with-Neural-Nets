@@ -1,4 +1,4 @@
-# NextGen-My-Simple-Game-
+# My Simple Simulation
 A simple world simulation. Basically, it is a genetic algorithm. There are tree species, Humans, Gritiss, and Drakonians.
 Each has a special skill. Through evoultion, each generation gets better as the weak are weeded out and the strong crossover and their
 young mutate. A simple display or the population gives a summary of how the population is doing. Such as the strongest species, the 
