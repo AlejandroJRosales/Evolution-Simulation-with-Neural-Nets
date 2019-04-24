@@ -226,7 +226,7 @@ def new_blood(weights, humans_medians, gritiss_medians, drakonians_medians, huma
         [human_count, gritis_count, drakonian_count].index(max(drakonian_count, max(human_count, gritis_count)))]
 
     contending_species = []
-    if dom_species != "Human":
+    if human_count != 0 and dom_species != "Human":
         human = [('Species', 'Human')]
         height = humans_medians[0] + random.randint(1, 10) / 100 if random.randint(0, 1) == 0 else humans_medians[
                                                                                                        0] - random.randint(
@@ -250,7 +250,7 @@ def new_blood(weights, humans_medians, gritiss_medians, drakonians_medians, huma
         human.append(('Strength', strength))
         contending_species.append(human)
 
-    elif dom_species != "Gritis":
+    elif gritis_count != 0 and dom_species != "Gritis":
         gritis = [('Species', 'Gritis')]
         height = gritiss_medians[0] + random.randint(1, 10) / 100 if random.randint(0, 1) == 0 else gritiss_medians[
                                                                                                         0] - random.randint(
@@ -275,7 +275,7 @@ def new_blood(weights, humans_medians, gritiss_medians, drakonians_medians, huma
         gritis.append(('Strength', strength))
         contending_species.append(gritis)
 
-    else:
+    elif drakonian_count != 0:
         drakonian = [('Species', 'Drakonian')]
         height = drakonians_medians[0] + random.randint(1, 10) / 100 if random.randint(0, 1) == 0 else \
         drakonians_medians[
@@ -319,12 +319,6 @@ def calc_fitness(population, weights):
 
 
 def select_fittest(population, fitness_scores, weights):
-    # idk man
-    for creature in range(len(population)):
-        for trait in range(len(population[creature])):
-            if trait != 0 and np.isnan(population[creature][trait][1]):
-                population.remove(creature)
-
     fitter_population = [population[fitness_scores.index(min(fitness_scores))]]
     pop_keep = random.randint(1, 8) * .1
     for i in range(int(len(population) * pop_keep)):
