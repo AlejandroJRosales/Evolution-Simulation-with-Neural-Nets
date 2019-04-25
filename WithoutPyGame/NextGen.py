@@ -13,7 +13,7 @@ trait_list = [
     'Weight',
     'IQ',
     'Speed',
-    'Strength'
+    'Power'
 ]
 tournament_size = 3
 pop_keep = .6
@@ -354,6 +354,7 @@ def select_fittest(population, fitness_scores, weights):
         winner = new_blood(weights, humans_medians, gritiss_medians, drakonians_medians, human_count, gritis_count, drakonian_count)
         fitter_population.append(winner)
     return fitter_population
+
 
 def crossover(population):
     def make_child():
