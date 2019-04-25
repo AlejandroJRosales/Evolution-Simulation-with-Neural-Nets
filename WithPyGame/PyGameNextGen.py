@@ -146,7 +146,8 @@ class Stats:
             current_len = len(str(traits[i - 1]))
             if i == 0:
                 # prints species
-                line1 = (" " * len(traits[i - 1]) + " " * (max_len - current_len))
+                # X
+                line1 = (" " * len(traits[i - 1]) + " " * (10 - current_len))
                 if final[0][1] != "Extinct" and human_count == 0:
                     final[0][1] = "Extinct"
                 if final[1][1] != "Extinct" and gritis_count == 0:
@@ -155,21 +156,26 @@ class Stats:
                     final[2][1] = "Extinct"
             elif i == 1:
                 # prints word Score
-                line2 += ("Score" + " " * ((max_len - current_len) + 1))
+                # X
+                line2 += ("Score" + " " * (13 - current_len))
             else:
-                # prints trait name
-                line3.append(f"{traits[i - 1]}")
+                # X
+                line3.append(f"{traits[i - 1]}" + " " * (13 - current_len))
             for a in range(len(final)):
-                # prints Species Names
                 if i == 0:
+                    # prints Species Names
+                    # X
                     current_len = len(str(final[a][i]))
-                    line1 += (f"{final[a][i]}" + " " * (trait_max_len - current_len))
+                    line1 += (f"{final[a][i]}" + " " * (13 - current_len))
                 else:
                     if type(final[a][i]) is not str:
                         current_len = len(f"{final[a][i]:.2f}")
-                        line3.append(" " * (max_len - current_len) + f"{final[a][i]:.2f}" + " " * (trait_max_len - current_len))
+                        # X
+                        line3.append(f"{final[a][i]:.2f}" + " " * (13 - current_len))
                     else:
-                        line3.append(" " * (max_len - current_len) + final[a][i] + " " * (trait_max_len - current_len))
+                        # X
+                        current_len = len(final[a][i])
+                        line3.append(final[a][i] + " " * (13 - current_len))
 
         line4 = []
         i = 0
@@ -185,13 +191,21 @@ class Stats:
         dom_proportion = max(drakonian_count, max(human_count, gritis_count)) / len(population)
         dom_species = species[[human_count, gritis_count, drakonian_count].index(max(drakonian_count, max(human_count, gritis_count)))]
         compilation1 = f"DOMINATING SPECIES: {dom_species} - Proportion of {dom_species}s: {dom_proportion * 100:.2f}%"
+
+        human = species[0]
+        gritis = species[1]
+        drakonian = species[2]
+
         if human_count == 0:
-            human_count = "Extinct"
+            human_count = "̶E̶x̶c̶t̶i̶n̶c̶t̶"
+            human = "̶H̶u̶m̶a̶n̶"
         if gritis_count == 0:
-            gritis_count = "Extinct"
+            gritis_count = "̶E̶x̶c̶t̶i̶n̶c̶t̶"
+            gritis = "̶G̶r̶i̶t̶i̶s̶"
         if drakonian_count == 0:
-            drakonian_count = "Extinct"
-        compilation2 = f"{human_count} {species[0]}       {gritis_count} {species[1]}       {drakonian_count} {species[2]}       {len(population)} creatures"
+            drakonian_count = "̶E̶x̶c̶t̶i̶n̶c̶t̶"
+            drakonian = "̶D̶r̶a̶k̶o̶n̶i̶a̶n̶"
+        compilation2 = f"{human_count} {human}   +   {gritis_count} {gritis}   +   {drakonian_count} {drakonian}   =   {len(population)} creatures"
 
         return compilation1, compilation2
 
