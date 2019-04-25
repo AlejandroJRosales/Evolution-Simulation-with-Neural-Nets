@@ -2,7 +2,6 @@ import random
 from random import shuffle
 import numpy as np
 
-
 species = [
     "Human",
     "Gritis",
@@ -67,17 +66,21 @@ class Stats:
 
     def creatures_summary(self, population, weights):
         humans = []
+        human_count = 0
         gritiss = []
+        gritis_count = 0
         drakonians = []
+        drakonian_count = 0
         for creature in population:
             if creature[0][1] == species[0]:
                 humans.append(creature)
+                human_count += 1
             elif creature[0][1] == species[1]:
                 gritiss.append(creature)
+                gritis_count += 1
             else:
                 drakonians.append(creature)
-
-        humans, gritiss, drakonians = sorted(humans), sorted(gritiss), sorted(drakonians)
+                drakonian_count += 1
 
         creature1 = []
         for i in range(len(trait_list)):
@@ -114,7 +117,7 @@ class Stats:
         final.append(["Drakonian"] + [fitness3] + creature3)
 
         traits = [
-            'Specie',
+            'Species',
             'ft',
             'lbs',
             'IQ',
@@ -142,18 +145,31 @@ class Stats:
         for i in range(len(final[0])):
             current_len = len(str(traits[i - 1]))
             if i == 0:
+                # prints species
                 line1 = (" " * len(traits[i - 1]) + " " * (max_len - current_len))
+                if final[0][1] != "Extinct" and human_count == 0:
+                    final[0][1] = "Extinct"
+                if final[1][1] != "Extinct" and gritis_count == 0:
+                    final[1][1] = "Extinct"
+                if final[2][1] != "Extinct" and drakonian_count == 0:
+                    final[2][1] = "Extinct"
             elif i == 1:
+                # prints word Score
                 line2 += ("Score" + " " * ((max_len - current_len) + 1))
             else:
+                # prints trait name
                 line3.append(f"{traits[i - 1]}")
             for a in range(len(final)):
+                # prints Species Names
                 if i == 0:
                     current_len = len(str(final[a][i]))
                     line1 += (f"{final[a][i]}" + " " * (trait_max_len - current_len))
                 else:
-                    current_len = len(f"{final[a][i]:.2f}")
-                    line3.append(" " * (max_len - current_len) + f"{final[a][i]:.2f}" + " " * (trait_max_len - current_len))
+                    if type(final[a][i]) is not str:
+                        current_len = len(f"{final[a][i]:.2f}")
+                        line3.append(" " * (max_len - current_len) + f"{final[a][i]:.2f}" + " " * (trait_max_len - current_len))
+                    else:
+                        line3.append(" " * (max_len - current_len) + final[a][i] + " " * (trait_max_len - current_len))
 
         line4 = []
         i = 0
@@ -262,7 +278,7 @@ def new_blood(weights, humans_medians, gritiss_medians, drakonians_medians, huma
         gritis.append(('Strength', strength))
         contending_species.append(gritis)
 
-    elif drakonian_count != 0:
+    elif drakonian_count != 0 and dom_species != "Drakonian":
         drakonian = [('Species', 'Drakonian')]
         height = drakonians_medians[0] + random.randint(1, 10) / 100 if random.randint(0, 1) == 0 else \
         drakonians_medians[
@@ -292,7 +308,7 @@ def new_blood(weights, humans_medians, gritiss_medians, drakonians_medians, huma
 
     fitness_scores = calc_fitness(contending_species, weights)
     winner = contending_species[fitness_scores.index(max(fitness_scores))]
-    return winner, winner[0][1], 0
+    return winner
 
 
 def calc_fitness(population, weights):
@@ -307,7 +323,7 @@ def calc_fitness(population, weights):
 
 def select_fittest(population, fitness_scores, weights):
     fitter_population = [population[fitness_scores.index(min(fitness_scores))]]
-    pop_keep = random.randint(1, 8) * .1
+    pop_keep = random.randint(3, 8) * .1
     for i in range(int(len(population) * pop_keep)):
         r = random.randint(0, len(fitness_scores) - 1)
         best = fitness_scores[r]
@@ -336,8 +352,6 @@ def select_fittest(population, fitness_scores, weights):
             drakonians.append(creature)
             drakonian_count += 1
 
-    humans, gritiss, drakonians = sorted(humans), sorted(gritiss), sorted(drakonians)
-
     humans_medians = []
     for i in range(len(trait_list)):
         trait = []
@@ -360,16 +374,8 @@ def select_fittest(population, fitness_scores, weights):
         drakonians_medians.append(np.median(trait))
 
     for i in range(len(population) - len(fitter_population)):
-        winner, species_name, add = new_blood(weights, humans_medians, gritiss_medians, drakonians_medians, human_count, gritis_count, drakonian_count)
+        winner = new_blood(weights, humans_medians, gritiss_medians, drakonians_medians, human_count, gritis_count, drakonian_count)
         fitter_population.append(winner)
-
-        if i != len(population):
-            if species_name == species[0]:
-                human_count += 1
-            if species_name == species[1]:
-                gritis_count += 1
-            if species_name == species[2]:
-                drakonian_count += 1
     return fitter_population
 
 
