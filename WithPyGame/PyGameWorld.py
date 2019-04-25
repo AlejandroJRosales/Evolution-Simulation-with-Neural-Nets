@@ -3,6 +3,9 @@ import random
 import PyGameNextGen as ng
 from PyGameNextGen import Stats
 
+import warnings
+warnings.filterwarnings("ignore")
+
 pygame.init()
 
 pop_n = [10, 10, 10]  # Number of: Humans, Drackonians, Gritiss
@@ -29,7 +32,7 @@ white = (255, 255, 255)
 red = (255, 0, 0)
 
 gameDisplay = pygame.display.set_mode((display_width, display_height))
-pygame.display.set_caption('MiniPop')
+pygame.display.set_caption('NOVA SIMULATION')
 clock = pygame.time.Clock()
 
 
@@ -41,7 +44,7 @@ def text_objects(text, font):
 def md_game_name(text):
     text_type = pygame.font.SysFont('times new roman', 35)
     TextSurf, TextRect = text_objects(text, text_type)
-    gameDisplay.blit(TextSurf, (display_width * .4, display_height * .02))
+    gameDisplay.blit(TextSurf, (display_width * .31, display_height * .02))
 
     pygame.display.update()
 
@@ -89,7 +92,7 @@ def md_counts(text):
 def md_species(text):
     text_type = pygame.font.SysFont('times new roman', 45)
     TextSurf, TextRect = text_objects(text, text_type)
-    gameDisplay.blit(TextSurf, (display_width * .17, display_height * .28))
+    gameDisplay.blit(TextSurf, (display_width * .17, display_height * .33))
 
     pygame.display.update()
 
@@ -97,7 +100,7 @@ def md_species(text):
 def md_summary(text, i):
     text_type = pygame.font.SysFont('times new roman', 45)
     TextSurf, TextRect = text_objects(text, text_type)
-    gameDisplay.blit(TextSurf, (display_width * .17, display_height * (.35 + ((i * 9) * .01))))
+    gameDisplay.blit(TextSurf, (display_width * .17, display_height * (.40 + ((i * 9) * .01))))
 
     pygame.display.update()
 
@@ -121,7 +124,7 @@ while not gameExit:
 
         gameDisplay.fill(black)
 
-        md_game_name("MiniPop v3")
+        md_game_name("NOVA SIMULATION V1")
 
         md_key_trait(key_trait)
         md_weights_summary(print_weights)
@@ -129,9 +132,18 @@ while not gameExit:
         md_dom_species(dom_species)
         md_counts(counts)
 
+        max_len = 0
+        for trait2 in traits:
+            if max_len < len(trait2):
+                max_len = len(trait2)
+
         md_species(" " * 4 + line1)
-        for i in range(len(line3)):
-            md_summary((traits[i] + " " * (len("Strngth") - len(traits[i])) + line3[i]), i)
+        print(line3)
+        md_summary((traits[0] + " " * (11 - len(traits[0])) + line3[0]), 0)
+        md_summary((traits[1] + " " * (17 - len(traits[1])) + line3[1]), 1)
+        md_summary((traits[2] + " " * (14 - len(traits[2])) + line3[2]), 2)
+        md_summary((traits[3] + " " * (13 - len(traits[3])) + line3[3]), 3)
+        md_summary((traits[4] + " " * (12 - len(traits[4])) + line3[4]), 4)
 
     generation += 1
 
