@@ -355,7 +355,6 @@ def select_fittest(population, fitness_scores, weights):
         fitter_population.append(winner)
     return fitter_population
 
-
 def crossover(population):
     def make_child():
         parent1 = population[creature]
