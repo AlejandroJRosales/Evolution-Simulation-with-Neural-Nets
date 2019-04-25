@@ -23,32 +23,44 @@ num_of_traits = len(trait_list)
 class Creatures:
     def generate_human(self):
         human = [('Species', 'Human')]
-        human.append(('Height', random.randint(4, 6) + round(random.random(), 2)))
-        human.append(('Weight', round(human[1][1] * random.randint(25, 35) + random.random(), 2)))
-        human.append(('IQ', random.randint(70, 170)))
-        speed = round(random.randint(20, 70) - (human[2][1] * 0.1))
-        human.append(('Speed', speed if speed > 1 else 5))
-        human.append(('Strength', round(random.randint(10, 60) + (human[2][1] * 0.2))))
+        mu, sigma = 67, 3  # height
+        human.append(('Height', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = 150, 15  # weight
+        human.append(('Weight', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = 100, 15  # IQ
+        human.append(('IQ', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = 40, 15  # Speed
+        human.append(('Speed', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = 40, 15  # Power
+        human.append(('Power', round(np.random.normal(mu, sigma), 3)))
         return human
 
     def generate_gritis(self):
         gritis = [('Species', 'Gritis')]
-        gritis.append(('Height', random.randint(7, 9) + round(random.random(), 2)))
-        gritis.append(('Weight', round(gritis[1][1] * random.randint(25, 35) + random.random(), 2)))
-        gritis.append(('IQ', random.randint(50, 80)))
-        speed = round(random.randint(10, 40) - (gritis[2][1] * 0.1))
-        gritis.append(('Speed', speed if speed > 1 else 5))
-        gritis.append(('Strength', round(random.randint(60, 100) + (gritis[2][1] * 0.2))))
+        mu, sigma = 96, 5  # height
+        gritis.append(('Height', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = 200, 20  # weight
+        gritis.append(('Weight', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = 40, 12  # IQ
+        gritis.append(('IQ', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = 40, 15  # Speed
+        gritis.append(('Speed', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = 20, 11  # Power
+        gritis.append(('Power', round(np.random.normal(mu, sigma), 3)))
         return gritis
 
     def generate_drakonian(self):
         drakonian = [('Species', 'Drakonian')]
-        drakonian.append(('Height', random.randint(8, 10) + round(random.random(), 2)))
-        drakonian.append(('Weight', round(drakonian[1][1] * random.randint(25, 35) + random.random(), 2)))
-        drakonian.append(('IQ', random.randint(10, 30)))
-        speed = round(random.randint(60, 100) - (drakonian[2][1] * 0.1))
-        drakonian.append(('Speed', speed if speed > 1 else 20))
-        drakonian.append(('Strength', round(random.randint(10, 40) + (drakonian[2][1] * 0.2))))
+        mu, sigma = 52, 5  # height
+        drakonian.append(('Height', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = 120, 12  # weight
+        drakonian.append(('Weight', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = 60, 12  # IQ
+        drakonian.append(('IQ', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = 80, 15  # Speed
+        drakonian.append(('Speed', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = 50, 10  # Power
+        drakonian.append(('Power', round(np.random.normal(mu, sigma), 3)))
         return drakonian
 
 
@@ -169,9 +181,9 @@ class Stats:
                     line1 += (f"{final[a][i]}" + " " * (13 - current_len))
                 else:
                     if type(final[a][i]) is not str:
-                        current_len = len(f"{final[a][i]:.2f}")
+                        current_len = len(f"{final[a][i]:.1f}")
                         # X
-                        line3.append(f"{final[a][i]:.2f}" + " " * (13 - current_len))
+                        line3.append(f"{final[a][i]:.1f}" + " " * (13 - current_len))
                     else:
                         # X
                         current_len = len(final[a][i])
@@ -243,81 +255,47 @@ def new_blood(weights, humans_medians, gritiss_medians, drakonians_medians, huma
         [human_count, gritis_count, drakonian_count].index(max(drakonian_count, max(human_count, gritis_count)))]
 
     contending_species = []
+    mutator = .001
     if human_count != 0 and dom_species != "Human":
         human = [('Species', 'Human')]
-        height = humans_medians[0] + random.randint(1, 10) / 100 if random.randint(0, 1) == 0 else humans_medians[
-                                                                                                       0] - random.randint(
-            1, 10) / 100
-        human.append(('Height', height))
-        weight = (humans_medians[1] + random.randint(1, 10) / 100 if random.randint(0, 1) == 0 else humans_medians[
-                                                                                                        1] - random.randint(
-            1, 10) / 100)
-        human.append(('Weight', weight))
-        iq = humans_medians[2] + random.randint(1, 10) / 100 if random.randint(0, 1) == 0 else humans_medians[
-                                                                                                   2] - random.randint(
-            1, 10) / 100
-        human.append(('IQ', iq))
-        speed = humans_medians[3] + random.randint(1, 10) / 100 if random.randint(0, 1) == 0 else humans_medians[
-                                                                                                      3] - random.randint(
-            1, 10) / 100
-        human.append(('Speed', speed))
-        strength = humans_medians[4] + random.randint(1, 10) / 100 if random.randint(0, 1) == 0 else humans_medians[
-                                                                                                         4] - random.randint(
-            1, 10) / 100
-        human.append(('Strength', strength))
+        mu, sigma = humans_medians[0], humans_medians[0] * mutator  # height
+        human.append(('Height', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = humans_medians[1], humans_medians[1] * mutator  # weight
+        human.append(('Weight', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = humans_medians[2], humans_medians[2] * mutator  # IQ
+        human.append(('IQ', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = humans_medians[3], humans_medians[3] * mutator  # Speed
+        human.append(('Speed', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = humans_medians[4], humans_medians[4] * mutator  # Power
+        human.append(('Power', round(np.random.normal(mu, sigma), 3)))
         contending_species.append(human)
 
     elif gritis_count != 0 and dom_species != "Gritis":
         gritis = [('Species', 'Gritis')]
-        height = gritiss_medians[0] + random.randint(1, 10) / 100 if random.randint(0, 1) == 0 else gritiss_medians[
-                                                                                                        0] - random.randint(
-            1, 10) / 100
-        gritis.append(('Height', height))
-        weight = (
-            gritiss_medians[1] + random.randint(1, 10) / 100 if random.randint(0, 1) == 0 else gritiss_medians[
-                                                                                                   1] - random.randint(
-                1, 10) / 100)
-        gritis.append(('Weight', weight))
-        iq = gritiss_medians[2] + random.randint(1, 10) / 100 if random.randint(0, 1) == 0 else gritiss_medians[
-                                                                                                    2] - random.randint(
-            1, 10) / 100
-        gritis.append(('IQ', iq))
-        speed = gritiss_medians[3] + random.randint(1, 10) / 100 if random.randint(0, 1) == 0 else gritiss_medians[
-                                                                                                       3] - random.randint(
-            1, 10) / 100
-        gritis.append(('Speed', speed))
-        strength = gritiss_medians[4] + random.randint(1, 10) / 100 if random.randint(0, 1) == 0 else gritiss_medians[
-                                                                                                          4] - random.randint(
-            1, 10) / 100
-        gritis.append(('Strength', strength))
+        mu, sigma = gritiss_medians[0], gritiss_medians[0] * mutator  # height
+        gritis.append(('Height', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = gritiss_medians[1], gritiss_medians[1] * mutator  # weight
+        gritis.append(('Weight', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = gritiss_medians[2], gritiss_medians[2] * mutator  # IQ
+        gritis.append(('IQ', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = gritiss_medians[3], gritiss_medians[3] * mutator  # Speed
+        gritis.append(('Speed', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = gritiss_medians[4], gritiss_medians[4] * mutator  # Power
+        gritis.append(('Power', round(np.random.normal(mu, sigma), 3)))
         contending_species.append(gritis)
 
     elif drakonian_count != 0 and dom_species != "Drakonian":
         drakonian = [('Species', 'Drakonian')]
-        height = drakonians_medians[0] + random.randint(1, 10) / 100 if random.randint(0, 1) == 0 else \
-        drakonians_medians[
-            0] - random.randint(
-            1, 10) / 100
-        drakonian.append(('Height', height))
-        weight = (
-            drakonians_medians[1] + random.randint(1, 10) / 100 if random.randint(0, 1) == 0 else drakonians_medians[
-                                                                                                      1] - random.randint(
-                1, 10) / 100)
-        drakonian.append(('Weight', weight))
-        iq = drakonians_medians[2] + random.randint(1, 10) / 100 if random.randint(0, 1) == 0 else drakonians_medians[
-                                                                                                       2] - random.randint(
-            1, 10) / 100
-        drakonian.append(('IQ', iq))
-        speed = drakonians_medians[3] + random.randint(1, 10) / 100 if random.randint(0, 1) == 0 else \
-        drakonians_medians[
-            3] - random.randint(
-            1, 10) / 100
-        drakonian.append(('Speed', speed))
-        strength = drakonians_medians[4] + random.randint(1, 10) / 100 if random.randint(0, 1) == 0 else \
-        drakonians_medians[
-            4] - random.randint(
-            1, 10) / 100
-        drakonian.append(('Strength', strength))
+        mu, sigma = drakonians_medians[0], drakonians_medians[0] * mutator  # height
+        drakonian.append(('Height', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = drakonians_medians[1], drakonians_medians[1] * mutator  # weight
+        drakonian.append(('Weight', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = drakonians_medians[2], drakonians_medians[2] * mutator  # IQ
+        drakonian.append(('IQ', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = drakonians_medians[3], drakonians_medians[3] * mutator  # Speed
+        drakonian.append(('Speed', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = drakonians_medians[4], drakonians_medians[4] * mutator  # Power
+        drakonian.append(('Power', round(np.random.normal(mu, sigma), 3)))
         contending_species.append(drakonian)
 
     fitness_scores = calc_fitness(contending_species, weights)
@@ -394,14 +372,20 @@ def select_fittest(population, fitness_scores, weights):
 
 
 def crossover(population):
+    def make_child():
+        parent1 = population[creature]
+        parent2 = population[to_breed_with]
+        r = random.randint(1, num_of_traits)
+        population[creature] = parent1[:r] + parent2[r:]
+        population[to_breed_with] = parent2[:r] + parent1[r:]
+
     for creature in range((len(population))):
         to_breed_with = random.randint(0, len(population) - 1)
         if random.random() <= prob_crossover and population[creature][0][1] == population[to_breed_with][0][1]:
-            parent1 = population[creature]
-            parent2 = population[to_breed_with]
-            r = random.randint(1, num_of_traits)
-            population[creature] = parent1[:r] + parent2[r:]
-            population[to_breed_with] = parent2[:r] + parent1[r:]
+            for i in range(1, 6):
+                prob_of_next_child = 0.5 / i
+                if random.random() <= prob_of_next_child:
+                    make_child()
     return population
 
 
