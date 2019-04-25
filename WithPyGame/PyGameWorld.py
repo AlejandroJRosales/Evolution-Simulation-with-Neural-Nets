@@ -83,9 +83,9 @@ def md_dom_species(text):
 
 
 def md_counts(text):
-    text_type = pygame.font.SysFont('times new roman', 31)
+    text_type = pygame.font.SysFont('times new roman', 30)
     TextSurf, TextRect = text_objects(text, text_type, yellow)
-    gameDisplay.blit(TextSurf, (display_width * .10, display_height * .25))
+    gameDisplay.blit(TextSurf, (display_width * .05, display_height * .25))
 
     pygame.display.update()
 
