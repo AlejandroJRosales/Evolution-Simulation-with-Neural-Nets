@@ -157,11 +157,11 @@ class Stats:
                 current_len = len(str(traits[i - 1]))
                 if i == 0:
                     print(" " * len(traits[i - 1]), " " * (max_len - current_len), end=" ")
-                    if final[0][1] != "Extinct" and human_count == 0:
+                    if human_count == 0:
                         final[0][1] = "Extinct"
-                    if final[1][1] != "Extinct" and gritis_count == 0:
+                    if gritis_count == 0:
                         final[1][1] = "Extinct"
-                    if final[2][1] != "Extinct" and drakonian_count == 0:
+                    if drakonian_count == 0:
                         final[2][1] = "Extinct"
                 elif i == 1:
                     print("Score", " " * ((max_len - current_len) + 1), end=" ")
