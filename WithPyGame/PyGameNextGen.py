@@ -130,7 +130,7 @@ class Stats:
 
         traits = [
             'Species',
-            'in”',
+            'ft',
             'lbs',
             'IQ',
             'Speed',
@@ -255,7 +255,7 @@ def new_blood(weights, humans_medians, gritiss_medians, drakonians_medians, huma
         [human_count, gritis_count, drakonian_count].index(max(drakonian_count, max(human_count, gritis_count)))]
 
     contending_species = []
-    mutator = .001
+    mutator = .005
     if human_count != 0 and dom_species != "Human":
         human = [('Species', 'Human')]
         mu, sigma = humans_medians[0], humans_medians[0] * mutator  # height
@@ -315,7 +315,7 @@ def calc_fitness(population, weights):
 
 def select_fittest(population, fitness_scores, weights):
     fitter_population = [population[fitness_scores.index(min(fitness_scores))]]
-    pop_keep = random.randint(3, 8) * .1
+    pop_keep = random.randint(4, 8) * .1
     for i in range(int(len(population) * pop_keep)):
         r = random.randint(0, len(fitness_scores) - 1)
         best = fitness_scores[r]
@@ -381,17 +381,19 @@ def crossover(population):
 
     for creature in range((len(population))):
         to_breed_with = random.randint(0, len(population) - 1)
-        if random.random() <= prob_crossover and population[creature][0][1] == population[to_breed_with][0][1]:
+        if prob_crossover <= random.random() and population[creature][0][1] == population[to_breed_with][0][1]:
             for i in range(1, 6):
-                prob_of_next_child = 0.5 / i
-                if random.random() <= prob_of_next_child:
+                prob_of_next_child = 0.4 / i
+                if prob_of_next_child <= random.random() or i == 1:
                     make_child()
+                else:
+                    break
     return population
 
 
 def mutation(population):
     for i in range(int((len(population) - 1))):
-        if random.random() <= prob_mutation:
+        if prob_mutation <= random.random():
             creature = population[i]
             for a in range(random.randint(0, num_of_traits - 2)):  # -1 species -1 IndexOutOfBounds
                 index = random.randint(1, num_of_traits)
