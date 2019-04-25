@@ -130,7 +130,7 @@ class Stats:
 
         traits = [
             'Species',
-            'Inches',
+            'in”',
             'lbs',
             'IQ',
             'Speed',
