@@ -67,17 +67,21 @@ class Stats:
     def creatures_summary(self, population, weights, generation, print_every):
         if generation % print_every == 0:
             humans = []
+            human_count = 0
             gritiss = []
+            gritis_count = 0
             drakonians = []
+            drakonian_count = 0
             for creature in population:
                 if creature[0][1] == species[0]:
                     humans.append(creature)
+                    human_count += 1
                 elif creature[0][1] == species[1]:
                     gritiss.append(creature)
+                    gritis_count += 1
                 else:
                     drakonians.append(creature)
-
-            humans, gritiss, drakonians = sorted(humans), sorted(gritiss), sorted(drakonians)
+                    drakonian_count += 1
 
             fitness_scores = calc_fitness(population, weights)
             best_creature = population[fitness_scores.index(max(fitness_scores))]
@@ -131,7 +135,7 @@ class Stats:
                 'lbs',
                 'IQ',
                 'Speed',
-                'Stngth'
+                'Power'
             ]
 
             species_name_len = 0
@@ -153,6 +157,12 @@ class Stats:
                 current_len = len(str(traits[i - 1]))
                 if i == 0:
                     print(" " * len(traits[i - 1]), " " * (max_len - current_len), end=" ")
+                    if final[0][1] != "Extinct" and human_count == 0:
+                        final[0][1] = "Extinct"
+                    if final[1][1] != "Extinct" and gritis_count == 0:
+                        final[1][1] = "Extinct"
+                    if final[2][1] != "Extinct" and drakonian_count == 0:
+                        final[2][1] = "Extinct"
                 elif i == 1:
                     print("Score", " " * ((max_len - current_len) + 1), end=" ")
                 else:
@@ -162,8 +172,11 @@ class Stats:
                         current_len = len(str(final[a][i]))
                         print(f"{final[a][i]}", " " * (trait_max_len - current_len), end=" ")
                     else:
-                        current_len = len(f"{final[a][i]:.2f}")
-                        print(f"{final[a][i]:.2f}", " " * (trait_max_len - current_len),  end=" ")
+                        if type(final[a][i]) is not str:
+                            current_len = len(f"{final[a][i]:.2f}")
+                            print(f"{final[a][i]:.2f}", " " * (trait_max_len - current_len), end=" ")
+                        else:
+                            print(f"{final[a][i]}", " " * (trait_max_len - current_len), end=" ")
                 print()
 
     def counting(self, population, generation, print_every=10):
@@ -348,8 +361,6 @@ def select_fittest(population, fitness_scores, weights):
         else:
             drakonians.append(creature)
             drakonian_count += 1
-
-    humans, gritiss, drakonians = sorted(humans), sorted(gritiss), sorted(drakonians)
 
     humans_medians = []
     for i in range(len(trait_list)):
