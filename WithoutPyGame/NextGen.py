@@ -130,7 +130,8 @@ class Stats:
             final.append(["Drakonian"] + [fitness3] + creature3)
 
             traits = [
-                'Specie',
+                'Species',
+                'Score',
                 'Feet',
                 'lbs',
                 'IQ',
@@ -138,55 +139,49 @@ class Stats:
                 'Power'
             ]
 
-            species_name_len = 0
-            for species_name in ["Human", "Gritis", "Drakonian"]:
-                if species_name_len < len(species_name):
-                    species_name_len = len(species_name)
+            max_str_len = 0
+            for species_name in species:
+                if max_str_len < len(species_name):
+                    max_str_len = len(species_name)
 
-            trait_max_len = species_name_len
-            for trait1 in final:
-                if trait_max_len < len(trait1):
-                    trait_max_len = len(trait1)
+            for trait in final:
+                if max_str_len < len(trait):
+                    max_str_len = len(trait)
 
-            max_len = 0
-            for trait2 in traits:
-                if max_len < len(trait2):
-                    max_len = len(trait2)
+            max_trait_name_len = 0
+            for trait in traits:
+                if max_trait_name_len < len(trait):
+                    max_trait_name_len = len(trait)
 
-            for i in range(len(final[0])):
-                current_len = len(str(traits[i - 1]))
-                if i == 0:
-                    print(" " * len(traits[i - 1]), " " * (max_len - current_len), end=" ")
-                    if human_count == 0:
-                        final[0][1] = "Extinct"
-                    if gritis_count == 0:
-                        final[1][1] = "Extinct"
-                    if drakonian_count == 0:
-                        final[2][1] = "Extinct"
-                elif i == 1:
-                    print("Score", " " * ((max_len - current_len) + 1), end=" ")
-                else:
-                    print(f"{traits[i - 1]}", " " * (max_len - current_len), end=" ")
-                for a in range(len(final)):
-                    if i == 0:
-                        current_len = len(str(final[a][i]))
-                        print(f"{final[a][i]}", " " * (trait_max_len - current_len), end=" ")
-                    else:
-                        if i == 2:
-                            in_feet = round(final[a][i] / 12)
-                            in_inches = final[a][i] % 12
-                            answer = f"{in_feet:.0f}'{in_inches:.0f}\""
-                            current_len = len(answer)
-                            if "nan" in answer:
-                                print(f"nan", " " * (trait_max_len - current_len), end=" ")
-                            else:
-                                print(f"{in_feet:.0f}'{in_inches:.0f}\"", " " * (trait_max_len - current_len), end=" ")
-                        elif type(final[a][i]) is not str:
-                            current_len = len(f"{final[a][i]:.1f}")
-                            print(f"{final[a][i]:.1f}", " " * (trait_max_len - current_len), end=" ")
-                        else:
-                            print(f"{final[a][i]}", " " * (trait_max_len - current_len), end=" ")
+            #   Species  Score               Height   Weight   IQ      Speed   Strength
+            # [['Human', 150.49075649967057, 67.002, 149.455, 100.022, 39.695, 39.763],
+            for trait in range(len(traits)):
                 print()
+                print(traits[trait] + " " * (max_trait_name_len - len(traits[trait])), end=" ")
+                for creature in final:
+                    if traits[trait] == "Species":
+                        print(creature[trait], end=" " * (max_str_len - len(creature[trait])))
+                    elif traits[trait] == "Score":
+                        if np.isnan(creature[trait]):
+                            print("Extinct", end=" " * (max_str_len - len(str("Extinct"))))
+                        else:
+                            rounded_score = round(creature[trait], 2)
+                            print(rounded_score, end=" " * (max_str_len - len(str(rounded_score))))
+                    elif np.isnan(creature[trait]):
+                        if traits[trait] == "Feet":
+                            print("Nan", end=" " * (max_str_len - len(str("Nan"))))
+                        else:
+                            print("Nan", end=" " * (max_str_len - len(str("Nan"))))
+                    else:
+                        if traits[trait] == "Feet":
+                            feet = int(creature[trait] / 12)
+                            inches = int(creature[trait]) % 12
+                            height = f"{feet}'{inches}\""
+                            print(height, end=" " * (max_str_len - len(str(height))))
+                        else:
+                            trait_rounded = round(creature[trait], 2)
+                            print(trait_rounded, end=" " * (max_str_len - len(str(trait_rounded))))
+            print()
 
     def counting(self, population, generation, print_every=1):
         human_count = 0
