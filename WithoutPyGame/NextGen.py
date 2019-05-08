@@ -14,10 +14,10 @@ trait_list = [
     'Speed',
     'Power'
 ]
-tournament_size = 3
 prob_crossover = 0.8
 prob_mutation = 0.5
-new_blood_child_benefit = random.randint(15, 30) / 10
+required_pack_size = 3
+prob_infected = .7
 num_of_traits = len(trait_list)
 
 
@@ -76,6 +76,8 @@ class Stats:
                 print(f"{trait_list[i]}: {weights[i]:.2f} - ", end="")
 
     def creatures_summary(self, population, weights, generation=0, print_every=1):
+        check_pulse(population)
+
         if generation % print_every == 0:
             humans = []
             human_count = 0
@@ -184,6 +186,8 @@ class Stats:
             print()
 
     def counting(self, population, generation, print_every=1):
+        check_pulse(population)
+
         human_count = 0
         gritis_count = 0
         drakonian_count = 0
@@ -211,6 +215,36 @@ class Stats:
                 f"{human_count} Human\n{gritis_count} Gritis\n{drakonian_count} Drakonian\n{len(population)} total creatures")
 
 
+class MassExtinction:
+    def infect(self, population):
+        safe_population = []
+        count = 0
+        for creature in population:
+            if prob_infected <= random.random():
+                safe_population.append(creature)
+            else:
+                count += 1
+        print(f"INFECTED: {count/len(population)}% died")
+        return safe_population
+
+
+def check_pulse(population):
+    human_count = 0
+    gritis_count = 0
+    drakonian_count = 0
+    for creature in population:
+        if creature[0][1] == species[0]:
+            human_count += 1
+        elif creature[0][1] == species[1]:
+            gritis_count += 1
+        else:
+            drakonian_count += 1
+
+    if [human_count, gritis_count, drakonian_count].count(0) > 1 \
+            and human_count + gritis_count + drakonian_count < 2:
+        raise Exception("\n\nAll Species Extinct... This is what happens when you play god")
+
+
 def generate_population(num_of_creatures):
     creatures = Creatures()
     pop_creatures = []
@@ -224,21 +258,6 @@ def generate_population(num_of_creatures):
     return pop_creatures
 
 
-def count_species(population):
-    human_count = 0
-    gritis_count = 0
-    drakonian_count = 0
-    for creature in population:
-        if creature[0][1] == species[0]:
-            human_count += 1
-        elif creature[0][1] == species[1]:
-            gritis_count += 1
-        else:
-            drakonian_count += 1
-
-    return human_count, gritis_count, drakonian_count
-
-
 def new_blood(weights, humans_medians, gritiss_medians, drakonians_medians, human_count, gritis_count, drakonian_count):
     dom_species = species[
         [human_count, gritis_count, drakonian_count].index(max(drakonian_count, max(human_count, gritis_count)))]
@@ -250,60 +269,110 @@ def new_blood(weights, humans_medians, gritiss_medians, drakonians_medians, huma
     speed_mutator = .25
     power_mutator = .25
 
-    if dom_species != "Human" and human_count != 0:
-        human = [('Species', 'Human')]
-        mu, sigma = humans_medians[0], height_mutator  # height
-        human.append(('Height', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = humans_medians[1], weight_mutator  # weight
-        human.append(('Weight', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = humans_medians[2], iq_mutator  # IQ
-        human.append(('IQ', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = humans_medians[3], speed_mutator  # Speed
-        human.append(('Speed', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = humans_medians[4], power_mutator  # Power
-        human.append(('Power', round(np.random.normal(mu, sigma), 3)))
-        contending_species.append(human)
+    if [human_count, drakonian_count, gritis_count].count(0) == 2:
+        if human_count != 0:
+            human = [('Species', 'Human')]
+            mu, sigma = humans_medians[0], height_mutator  # height
+            human.append(('Height', round(np.random.normal(mu, sigma), 3)))
+            mu, sigma = humans_medians[1], weight_mutator  # weight
+            human.append(('Weight', round(np.random.normal(mu, sigma), 3)))
+            mu, sigma = humans_medians[2], iq_mutator  # IQ
+            human.append(('IQ', round(np.random.normal(mu, sigma), 3)))
+            mu, sigma = humans_medians[3], speed_mutator  # Speed
+            human.append(('Speed', round(np.random.normal(mu, sigma), 3)))
+            mu, sigma = humans_medians[4], power_mutator  # Power
+            human.append(('Power', round(np.random.normal(mu, sigma), 3)))
+            return human
 
-    if dom_species != "Gritis" and gritis_count != 0:
-        gritis = [('Species', 'Gritis')]
-        mu, sigma = gritiss_medians[0], height_mutator  # height
-        gritis.append(('Height', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = gritiss_medians[1], weight_mutator  # weight
-        gritis.append(('Weight', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = gritiss_medians[2], iq_mutator  # IQ
-        gritis.append(('IQ', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = gritiss_medians[3], speed_mutator  # Speed
-        gritis.append(('Speed', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = gritiss_medians[4], power_mutator  # Power
-        gritis.append(('Power', round(np.random.normal(mu, sigma), 3)))
-        contending_species.append(gritis)
+        if gritis_count != 0:
+            gritis = [('Species', 'Gritis')]
+            mu, sigma = gritiss_medians[0], height_mutator  # height
+            gritis.append(('Height', round(np.random.normal(mu, sigma), 3)))
+            mu, sigma = gritiss_medians[1], weight_mutator  # weight
+            gritis.append(('Weight', round(np.random.normal(mu, sigma), 3)))
+            mu, sigma = gritiss_medians[2], iq_mutator  # IQ
+            gritis.append(('IQ', round(np.random.normal(mu, sigma), 3)))
+            mu, sigma = gritiss_medians[3], speed_mutator  # Speed
+            gritis.append(('Speed', round(np.random.normal(mu, sigma), 3)))
+            mu, sigma = gritiss_medians[4], power_mutator  # Power
+            gritis.append(('Power', round(np.random.normal(mu, sigma), 3)))
+            return gritis
 
-    if dom_species != "Drakonian" and drakonian_count != 0:
-        drakonian = [('Species', 'Drakonian')]
-        mu, sigma = drakonians_medians[0], height_mutator  # height
-        drakonian.append(('Height', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = drakonians_medians[1], weight_mutator  # weight
-        drakonian.append(('Weight', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = drakonians_medians[2], iq_mutator  # IQ
-        drakonian.append(('IQ', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = drakonians_medians[3], speed_mutator  # Speed
-        drakonian.append(('Speed', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = drakonians_medians[4], power_mutator  # Power
-        drakonian.append(('Power', round(np.random.normal(mu, sigma), 3)))
-        contending_species.append(drakonian)
+        if drakonian_count != 0:
+            drakonian = [('Species', 'Drakonian')]
+            mu, sigma = drakonians_medians[0], height_mutator  # height
+            drakonian.append(('Height', round(np.random.normal(mu, sigma), 3)))
+            mu, sigma = drakonians_medians[1], weight_mutator  # weight
+            drakonian.append(('Weight', round(np.random.normal(mu, sigma), 3)))
+            mu, sigma = drakonians_medians[2], iq_mutator  # IQ
+            drakonian.append(('IQ', round(np.random.normal(mu, sigma), 3)))
+            mu, sigma = drakonians_medians[3], speed_mutator  # Speed
+            drakonian.append(('Speed', round(np.random.normal(mu, sigma), 3)))
+            mu, sigma = drakonians_medians[4], power_mutator  # Power
+            drakonian.append(('Power', round(np.random.normal(mu, sigma), 3)))
+            return drakonian
 
-    fitness_scores = calc_fitness(contending_species, weights)
-    probability = .5
-    if fitness_scores.index(max(fitness_scores)) == 0:
-        probability += new_blood_child_benefit
-    elif fitness_scores.index(max(fitness_scores)) == 1:
-        probability -= new_blood_child_benefit
-
-    if random.random() <= probability:
-        winner = contending_species[0]
     else:
-        winner = contending_species[1]
-    return winner
+        if dom_species != "Human" and human_count != 0:
+            human = [('Species', 'Human')]
+            mu, sigma = humans_medians[0], height_mutator  # height
+            human.append(('Height', round(np.random.normal(mu, sigma), 3)))
+            mu, sigma = humans_medians[1], weight_mutator  # weight
+            human.append(('Weight', round(np.random.normal(mu, sigma), 3)))
+            mu, sigma = humans_medians[2], iq_mutator  # IQ
+            human.append(('IQ', round(np.random.normal(mu, sigma), 3)))
+            mu, sigma = humans_medians[3], speed_mutator  # Speed
+            human.append(('Speed', round(np.random.normal(mu, sigma), 3)))
+            mu, sigma = humans_medians[4], power_mutator  # Power
+            human.append(('Power', round(np.random.normal(mu, sigma), 3)))
+            contending_species.append(human)
+
+        if dom_species != "Gritis" and gritis_count != 0:
+            gritis = [('Species', 'Gritis')]
+            mu, sigma = gritiss_medians[0], height_mutator  # height
+            gritis.append(('Height', round(np.random.normal(mu, sigma), 3)))
+            mu, sigma = gritiss_medians[1], weight_mutator  # weight
+            gritis.append(('Weight', round(np.random.normal(mu, sigma), 3)))
+            mu, sigma = gritiss_medians[2], iq_mutator  # IQ
+            gritis.append(('IQ', round(np.random.normal(mu, sigma), 3)))
+            mu, sigma = gritiss_medians[3], speed_mutator  # Speed
+            gritis.append(('Speed', round(np.random.normal(mu, sigma), 3)))
+            mu, sigma = gritiss_medians[4], power_mutator  # Power
+            gritis.append(('Power', round(np.random.normal(mu, sigma), 3)))
+            contending_species.append(gritis)
+
+        if dom_species != "Drakonian" and drakonian_count != 0:
+            drakonian = [('Species', 'Drakonian')]
+            mu, sigma = drakonians_medians[0], height_mutator  # height
+            drakonian.append(('Height', round(np.random.normal(mu, sigma), 3)))
+            mu, sigma = drakonians_medians[1], weight_mutator  # weight
+            drakonian.append(('Weight', round(np.random.normal(mu, sigma), 3)))
+            mu, sigma = drakonians_medians[2], iq_mutator  # IQ
+            drakonian.append(('IQ', round(np.random.normal(mu, sigma), 3)))
+            mu, sigma = drakonians_medians[3], speed_mutator  # Speed
+            drakonian.append(('Speed', round(np.random.normal(mu, sigma), 3)))
+            mu, sigma = drakonians_medians[4], power_mutator  # Power
+            drakonian.append(('Power', round(np.random.normal(mu, sigma), 3)))
+            contending_species.append(drakonian)
+
+        # This is because n_species = 0  so not chosen and dominating species not chosen,
+        # thus len of contending_species = 1. Easier than printing out big chunk of code again
+        if len(contending_species) != 1:
+            fitness_scores = calc_fitness(contending_species, weights)
+            probability = .5
+            new_blood_child_benefit = random.randint(15, 30) / 100
+            if fitness_scores.index(max(fitness_scores)) == 0:
+                probability += new_blood_child_benefit
+            elif fitness_scores.index(max(fitness_scores)) == 1:
+                probability -= new_blood_child_benefit
+            if random.random() <= probability:
+                winner = contending_species[0]
+            else:
+                winner = contending_species[1]
+            return winner
+
+        else:
+            return contending_species[0]
 
 
 def calc_fitness(population, weights):
@@ -317,6 +386,8 @@ def calc_fitness(population, weights):
 
 
 def select_fittest(population, fitness_scores, weights):
+    tournament_size = random.randint(3, 6)
+
     humans = []
     human_count = 0
     gritiss = []
@@ -356,18 +427,47 @@ def select_fittest(population, fitness_scores, weights):
         population.pop(drakonian_index)
         fitness_scores.pop(drakonian_index)
 
-    fitter_population = [population[fitness_scores.index(min(fitness_scores))]]
+    fitter_population = [population[fitness_scores.index(max(fitness_scores))]]
     pop_keep = random.randint(4, 8) * .1
     for i in range(int(len(population) * pop_keep)):
-        r = random.randint(0, len(fitness_scores) - 1)
-        best = fitness_scores[r]
-        best_creature = population[r]
-        for member in range(tournament_size):
+        competitors = []
+        for member in range(tournament_size - 1):
             competitor_index = random.randint(0, len(fitness_scores) - 1)
-            if fitness_scores[competitor_index] > best:
-                best = fitness_scores[competitor_index]
-                best_creature = population[competitor_index]
-        fitter_population.append(best_creature)
+            competitor_fitness = fitness_scores[competitor_index]
+            competitors.append((competitor_index, competitor_fitness))
+
+        competitors_names = []
+        for competitor in competitors:
+            competitors_names.append(population[competitor[0]][0][1])
+
+        if competitors_names.count("Drakonian") >= required_pack_size:
+            drakonians_competitors = []
+            for competitor in range(len(competitors)):
+                if competitors_names[competitor] == "Drakonian":
+                    drakonians_competitors.append(competitors[competitor])
+
+            for a in range(random.randint(1, 2)):
+                best_fitness_score = 0
+                best_creature = []
+                best_creature_index = 0
+                index = 0
+                for drakonian in drakonians_competitors:
+                    if drakonian[1] > best_fitness_score:
+                        best_fitness_score = drakonian[1]
+                        best_creature = population[drakonian[0]]
+                        best_creature_index = index
+                    index += 1
+                drakonians_competitors.pop(best_creature_index)
+                fitter_population.append(best_creature)
+        else:
+            r = random.randint(0, len(fitness_scores) - 1)
+            best_fitness_score = fitness_scores[r]
+            best_creature = population[r]
+            for competitor in competitors:
+                if competitor[1] > best_fitness_score:
+                    best_fitness_score = competitor[1]
+                    best_creature = population[competitor[0]]
+            fitter_population.append(best_creature)
 
     humans_medians = []
     for i in range(len(trait_list)):
@@ -438,5 +538,9 @@ def breed(population):
 
 
 def evolve(population, weights):
-    fitness_scores = calc_fitness(population, weights)
-    return breed(select_fittest(population, fitness_scores, weights))
+    check_pulse(population)
+    try:
+        fitness_scores = calc_fitness(population, weights)
+        return breed(select_fittest(population, fitness_scores, weights))
+    except Exception:
+        raise Exception("\n\nSimulation Broken... This is what happens when you play god")
