@@ -8,9 +8,9 @@ A simple display or the population gives a summary of how the population is doin
 
 ***
 
-###Implemented
+### Implemented
 ***
 
 
-###To-Dot
+### To-Do
 ***
