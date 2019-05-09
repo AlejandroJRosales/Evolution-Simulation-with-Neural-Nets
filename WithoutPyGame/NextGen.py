@@ -16,53 +16,13 @@ trait_list = [
 ]
 prob_crossover = 0.8
 prob_mutation = 0.5
+mutation_rate = .1
+max_num_kids = 6
+tournament_min = 3
+tournament_max = 6
 required_pack_size = 3
 prob_infected = .7
 num_of_traits = len(trait_list)
-
-
-class Creatures:
-    def generate_human(self):
-        human = [('Species', 'Human')]
-        mu, sigma = 67, 3  # height
-        human.append(('Height', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = 150, 15  # weight
-        human.append(('Weight', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = 100, 15  # IQ
-        human.append(('IQ', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = 40, 15  # Speed
-        human.append(('Speed', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = 40, 15  # Power
-        human.append(('Power', round(np.random.normal(mu, sigma), 3)))
-        return human
-
-    def generate_gritis(self):
-        gritis = [('Species', 'Gritis')]
-        mu, sigma = 96, 5  # height
-        gritis.append(('Height', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = 200, 20  # weight
-        gritis.append(('Weight', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = 40, 12  # IQ
-        gritis.append(('IQ', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = 40, 15  # Speed
-        gritis.append(('Speed', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = 20, 11  # Power
-        gritis.append(('Power', round(np.random.normal(mu, sigma), 3)))
-        return gritis
-
-    def generate_drakonian(self):
-        drakonian = [('Species', 'Drakonian')]
-        mu, sigma = 52, 5  # height
-        drakonian.append(('Height', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = 120, 12  # weight
-        drakonian.append(('Weight', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = 60, 12  # IQ
-        drakonian.append(('IQ', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = 80, 15  # Speed
-        drakonian.append(('Speed', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = 50, 10  # Power
-        drakonian.append(('Power', round(np.random.normal(mu, sigma), 3)))
-        return drakonian
 
 
 class Stats:
@@ -224,8 +184,52 @@ class MassExtinction:
                 safe_population.append(creature)
             else:
                 count += 1
-        print(f"INFECTED: {count/len(population)}% died")
+        print(f"\nINFECTED: {count/len(population)}% died")
         return safe_population
+
+
+class Creatures:
+    def generate_human(self):
+        human = [('Species', 'Human')]
+        mu, sigma = 67, 3  # height
+        human.append(('Height', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = 150, 15  # weight
+        human.append(('Weight', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = 100, 15  # IQ
+        human.append(('IQ', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = 40, 15  # Speed
+        human.append(('Speed', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = 40, 15  # Power
+        human.append(('Power', round(np.random.normal(mu, sigma), 3)))
+        return human
+
+    def generate_gritis(self):
+        gritis = [('Species', 'Gritis')]
+        mu, sigma = 96, 5  # height
+        gritis.append(('Height', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = 200, 20  # weight
+        gritis.append(('Weight', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = 40, 12  # IQ
+        gritis.append(('IQ', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = 40, 15  # Speed
+        gritis.append(('Speed', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = 20, 11  # Power
+        gritis.append(('Power', round(np.random.normal(mu, sigma), 3)))
+        return gritis
+
+    def generate_drakonian(self):
+        drakonian = [('Species', 'Drakonian')]
+        mu, sigma = 52, 5  # height
+        drakonian.append(('Height', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = 120, 12  # weight
+        drakonian.append(('Weight', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = 60, 12  # IQ
+        drakonian.append(('IQ', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = 80, 15  # Speed
+        drakonian.append(('Speed', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = 50, 10  # Power
+        drakonian.append(('Power', round(np.random.normal(mu, sigma), 3)))
+        return drakonian
 
 
 def check_pulse(population):
@@ -243,21 +247,8 @@ def check_pulse(population):
     if [human_count, gritis_count, drakonian_count].count(0) > 1 \
             and human_count + gritis_count + drakonian_count < 2:
         raise Exception("\n\nAll Species Extinct... This is what happens when you play god")
-
-
-def generate_population(num_of_creatures):
-    creatures = Creatures()
-    pop_creatures = []
-    for i in range(num_of_creatures[0]):
-        pop_creatures.append(creatures.generate_human())
-    for i in range(num_of_creatures[1]):
-        pop_creatures.append(creatures.generate_gritis())
-    for i in range(num_of_creatures[2]):
-        pop_creatures.append(creatures.generate_drakonian())
-    shuffle(pop_creatures)
-    return pop_creatures
-
-
+    
+    
 def new_blood(weights, humans_medians, gritiss_medians, drakonians_medians, human_count, gritis_count, drakonian_count):
     dom_species = species[
         [human_count, gritis_count, drakonian_count].index(max(drakonian_count, max(human_count, gritis_count)))]
@@ -375,18 +366,31 @@ def new_blood(weights, humans_medians, gritiss_medians, drakonians_medians, huma
             return contending_species[0]
 
 
+def generate_population(num_of_creatures):
+    creatures = Creatures()
+    pop_creatures = []
+    for i in range(num_of_creatures[0]):
+        pop_creatures.append(creatures.generate_human())
+    for i in range(num_of_creatures[1]):
+        pop_creatures.append(creatures.generate_gritis())
+    for i in range(num_of_creatures[2]):
+        pop_creatures.append(creatures.generate_drakonian())
+    shuffle(pop_creatures)
+    return pop_creatures
+
+
 def calc_fitness(population, weights):
     fitness_scores = []
     for creature in population:
         fitness = 0
         for index in range(num_of_traits):
             fitness += creature[index + 1][1] * weights[index]
-        fitness_scores.append(fitness)
+        fitness_scores.append(round(fitness, 3))
     return fitness_scores
 
 
 def select_fittest(population, fitness_scores, weights):
-    tournament_size = random.randint(3, 6)
+    tournament_size = random.randint(tournament_min, tournament_max)
 
     humans = []
     human_count = 0
@@ -508,7 +512,7 @@ def crossover(population):
     for creature in range((len(population))):
         to_breed_with = random.randint(0, len(population) - 1)
         if prob_crossover <= random.random() and population[creature][0][1] == population[to_breed_with][0][1]:
-            for i in range(1, 6):
+            for i in range(1, max_num_kids):
                 prob_of_next_child = 0.4 / i
                 if prob_of_next_child <= random.random() or i == 1:
                     make_child()
@@ -525,9 +529,9 @@ def mutation(population):
                 index = random.randint(1, num_of_traits)
                 trait = old_trait = creature[index][1]
                 if random.randint(0, 1) == 0:
-                    trait = round(trait + (trait * .1), 2)
+                    trait = round(trait + (trait * mutation_rate), 3)
                 else:
-                    trait = round(trait - (trait * .1), 2)
+                    trait = round(trait - (trait * mutation_rate), 3)
                 creature[index] = (creature[index][0], trait) if trait > 1 else (creature[index][0], old_trait)
             population.append(creature)
         return population
