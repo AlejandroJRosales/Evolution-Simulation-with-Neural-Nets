@@ -38,6 +38,7 @@ Simulation:
   4. Depiction of Speices
   5. Shared Resources (Intelligence Required)
   6. Wars
+  7. ~~Mass Extinction From Illness~~
   8. Include Map
 
 Display:
