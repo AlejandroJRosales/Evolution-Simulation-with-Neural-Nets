@@ -8,36 +8,39 @@ A simple display or the population gives a summary of how the population is doin
 
 
 
+
 ### Implemented
 ***
 
-Simulation:
-  1. Inititate Population From Normal Distribution (3 Species: Humans, Gritiss, and Drakonians)
-  2. Survival of the fittest (Fitness Scores, Tournament Selection)
-  3. Fittest Breed (Mutations, Crossover)
-  4. "Enviromental" Factors (Simple weights applied to skills)
-  5. Drakonians Can Hunt in Packs
-  6. Species Can Have Up To N kids. (Let N be number of kids and P be probability of having next kid. P = .4/N)
-  7. Species Can Go Extinct (1, 2, or All)
-  8. Infectious Disease Can Kill N% of Total Population
-  
-Display:
-  1. Display Generation and Key Trait Along With Weights For Other Traits
-  2. Display Counts of Species and Total Population Size
-  3. Display Medians for All Species
+  Simulation:
+    1. Inititate Population From Normal Distribution (3 Species: Humans, Gritiss, and Drakonians)
+    2. Survival of the fittest (Fitness Scores, Tournament Selection)
+    3. Fittest Breed (Mutations, Crossover)
+    4. "Enviromental" Factors (Simple weights applied to skills)
+    5. Drakonians Can Hunt in Packs
+    6. Species Can Have Up To N kids. (Let N be number of kids and P be probability of having next kid. P = .4/N)
+    7. Species Can Go Extinct (1, 2, or All)
+    8. Infectious Disease Can Kill N% of Total Population
+
+  Display:
+    1. Display Generation and Key Trait Along With Weights For Other Traits
+    2. Display Counts of Species and Total Population Size
+    3. Display Medians for All Species
+
+
 
 
 ### To-Do
 ***
 
-Simulation:
-  1. Adjust Pack Hunting
-  2. Small, Fast Depiction of Life
-  3. More Species
-  4. Depiction of Speices
-  5. Shared Resources (Intelligence Required)
-  6. Wars
-  8. Include Map
- 
-Display:
-  1. Just Make it Better
+  Simulation:
+    1. Adjust Pack Hunting
+    2. Small, Fast Depiction of Life
+    3. More Species
+    4. Depiction of Speices
+    5. Shared Resources (Intelligence Required)
+    6. Wars
+    8. Include Map
+
+  Display:
+    1. Just Make it Better
