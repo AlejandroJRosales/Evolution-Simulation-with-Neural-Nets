@@ -22,6 +22,7 @@ tournament_min = 3
 tournament_max = 6
 required_pack_size = 3
 prob_infected = .7
+prob_change_fight = .2
 num_of_traits = len(trait_list)
 
 
@@ -176,16 +177,143 @@ class Stats:
 
 
 class MassExtinction:
-    def infect(self, population):
+    def infect(self, population, pause=True):
         safe_population = []
-        count = 0
         for creature in population:
             if prob_infected <= random.random():
                 safe_population.append(creature)
-            else:
-                count += 1
-        print(f"\nINFECTED: {count/len(population)}% died")
+
+        if pause:
+            print(f"\nINFECTED: {1 - len(safe_population)/len(population)}% died")
+            input("\nPress ENTER to continue...")
         return safe_population
+
+    def war(self, population, weights, to_fight, pause=True):
+        initial_pop_size = len(population)
+
+        try:
+            creature1 = random.randint(0, len(population) - 1)
+            creature2 = random.randint(0, len(population) - 1)
+            for a in range(int((len(population) - 1) * to_fight), 0, -1):
+                if creature1 >= len(population):
+                    creature1 = random.randint(0, len(population) - 1)
+                if creature2 >= len(population):
+                    creature2 = random.randint(0, len(population) - 1)
+
+                if calc_fitness([population[creature1]], weights) < calc_fitness([population[creature2]], weights):
+                    del population[creature1]
+                    creature1 = random.randint(0, len(population) - 1)
+                elif calc_fitness([population[creature1]], weights) >= calc_fitness([population[creature2]], weights):
+                    del population[creature2]
+                    creature2 = random.randint(0, len(population) - 1)
+
+                if random.random() <= prob_change_fight:
+                    creature1 = random.randint(0, len(population) - 1)
+                    creature2 = random.randint(0, len(population) - 1)
+
+        except Exception:
+            raise Exception("\n\nAll Species Extinct... This is what happens when you play god")
+
+        if pause:
+            print(f"\nWORLD WAR: {round((1 - len(population) / initial_pop_size) * 100, 2)}% died")
+            input("\nPress ENTER to continue...")
+        return population
+
+    def species_war(self, population, weights, to_fight, pause=True):
+        # Method to get specie index that is not similar to the other creature fighting and its creature index
+        def select_creature(other_specie_index):
+            specie_index = random.randint(0, len(species_fighting) - 1)
+            while specie_index == other_specie_index:
+                specie_index = random.randint(0, len(species_fighting) - 1)
+            index = random.randint(0, len(species_war[specie_index]) - 1)
+            return specie_index, index
+
+        # Select names of species that will fight
+        r = random.randint(2, len(species))
+        possible_fighting = []
+        for specie in species:
+            possible_fighting.append(specie)
+        species_fighting = [possible_fighting.pop(random.randint(0, len(possible_fighting) - 1)) for i in range(r)]
+
+        # Collect initial counts for each species and categorize species from population
+        initial_counts = []
+        species_war = []
+        for specie_fighting in species_fighting:
+            fighting = []
+            for i in range(len(population) - 1, 0, -1):
+                if population[i][0][1] == specie_fighting:
+                    fighting.append(population.pop(i))
+            initial_counts.append(len(fighting))
+            species_war.append(fighting)
+
+        # Check to see of their are enough creatures in each species fighting, to fight
+        if initial_counts.count(0) > 0:
+            if initial_counts.count(0) > len(species_fighting) - 2:
+                species_war = []
+                for specie_fighting in species_war:
+                    species_war += specie_fighting
+                shuffle(species_war)
+                return species_war + population
+            else:
+                for index in range(len(initial_counts) - 1, 0, -1):
+                    if initial_counts[index] == 0:
+                        del species_war[index]
+                        del initial_counts[index]
+                        del species_fighting[index]
+
+        # The actual fight
+        specie1 = random.randint(0, len(species_fighting) - 1)
+        index1 = random.randint(0, len(species_war[specie1]) - 1)
+        specie2, index2 = select_creature(specie1)
+        smallest_specie_size = min([len(specie) for specie in species_war])
+        for a in range(int((smallest_specie_size - 1) * to_fight), 0, -1):
+            if index1 >= len(species_war[specie1]):
+                specie1, index1 = select_creature(specie2)
+            if index2 >= len(species_war[specie2]):
+                specie2, index2 = select_creature(specie1)
+
+            # Calculate fitness. Here we +- 10-40% power of creature to make it intereseting
+            creature1_fitness = calc_fitness([species_war[specie1][index1]], weights)[0]
+            creature2_fitness = calc_fitness([species_war[specie2][index2]], weights)[0]
+            boost1 = random.randint(1, 4) * .1
+            boost2 = random.randint(1, 4) * .1
+            creature1_fitness = creature1_fitness + (creature1_fitness * boost1) if random.random() <= .5 else creature1_fitness - (creature1_fitness * boost1)
+            creature2_fitness = creature2_fitness + (creature2_fitness * boost2) if random.random() <= .5 else creature2_fitness - (creature2_fitness * boost2)
+
+            # The actual actual fight
+            if creature1_fitness < creature2_fitness:
+                del species_war[specie1][index1]
+                specie1, creature1 = select_creature(specie2)
+            elif creature1_fitness > creature2_fitness:
+                del species_war[specie2][index2]
+                specie2, creature2 = select_creature(specie1)
+
+            if random.random() <= prob_change_fight:
+                specie1, creature1 = select_creature(specie2)
+                specie2, creature2 = select_creature(specie1)
+
+        # Combine the separated species
+        whos_fighting = []
+        for specie_fighting in species_war:
+            whos_fighting += specie_fighting
+        shuffle(whos_fighting)
+
+        # Final creature count for each species that found to count for casualties
+        final_counts = []
+        for specie_fighting in species_fighting:
+            count = 0
+            for i in range(len(whos_fighting) - 1):
+                if whos_fighting[i][0][1] == specie_fighting:
+                    count += 1
+            final_counts.append(count)
+
+        if pause:
+            print(f"\nSPECIES WAR BETWEEN {species_fighting}: ", end="")
+            for specie in range(len(species_war)):
+                print(f"{round((1 - final_counts[specie] / initial_counts[specie]) * 100, 2)}% of {species_fighting[specie]} died", end="   ")
+            input("\n\nPress ENTER to continue...")
+
+        return whos_fighting + population
 
 
 class Creatures:
@@ -233,22 +361,28 @@ class Creatures:
 
 
 def check_pulse(population):
-    human_count = 0
-    gritis_count = 0
-    drakonian_count = 0
-    for creature in population:
-        if creature[0][1] == species[0]:
-            human_count += 1
-        elif creature[0][1] == species[1]:
-            gritis_count += 1
-        else:
-            drakonian_count += 1
+    try:
+        human_count = 0
+        gritis_count = 0
+        drakonian_count = 0
+        for creature in population:
+            try:
+                if creature[0][1] == species[0]:
+                    human_count += 1
+                elif creature[0][1] == species[1]:
+                    gritis_count += 1
+                else:
+                    drakonian_count += 1
+            except:
+                raise Exception(creature)
 
-    if [human_count, gritis_count, drakonian_count].count(0) > 1 \
-            and human_count + gritis_count + drakonian_count < 2:
-        raise Exception("\n\nAll Species Extinct... This is what happens when you play god")
-    
-    
+        if [human_count, gritis_count, drakonian_count].count(0) > 1 \
+                and human_count + gritis_count + drakonian_count < 2:
+            raise Exception("\n\nAll Species Extinct... This is what happens when you play god")
+    except Exception:
+        raise Exception("\n\nSimulation Broken... This is what happens when you play god")
+
+
 def new_blood(weights, humans_medians, gritiss_medians, drakonians_medians, human_count, gritis_count, drakonian_count):
     dom_species = species[
         [human_count, gritis_count, drakonian_count].index(max(drakonian_count, max(human_count, gritis_count)))]
@@ -422,14 +556,14 @@ def select_fittest(population, fitness_scores, weights):
         index += 1
 
     if human_count == 1:
-        population.pop(human_index)
-        fitness_scores.pop(human_index)
+        del population[human_index]
+        del fitness_scores[human_index]
     if gritis_count == 1:
-        population.pop(gritis_index)
-        fitness_scores.pop(gritis_index)
+        del population[gritis_index]
+        del fitness_scores[gritis_index]
     if drakonian_count == 1:
-        population.pop(drakonian_index)
-        fitness_scores.pop(drakonian_index)
+        del population[drakonian_index]
+        del fitness_scores[drakonian_index]
 
     fitter_population = [population[fitness_scores.index(max(fitness_scores))]]
     pop_keep = random.randint(4, 8) * .1
@@ -461,7 +595,7 @@ def select_fittest(population, fitness_scores, weights):
                         best_creature = population[drakonian[0]]
                         best_creature_index = index
                     index += 1
-                drakonians_competitors.pop(best_creature_index)
+                del drakonians_competitors[best_creature_index]
                 fitter_population.append(best_creature)
         else:
             r = random.randint(0, len(fitness_scores) - 1)
