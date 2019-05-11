@@ -19,6 +19,7 @@ Simulation:
   6. Species Can Have Up To N kids. (Let N be number of kids and P be probability of having next kid. P = .4/N)
   7. Species Can Go Extinct (1, 2, or All)
   8. Infectious Disease Can Kill N% of Total Population
+  9. There are simple wars (everyone fights everyone) and species wars, where it is one species against another
 
 Display:
   1. Display Generation and Key Trait Along With Weights For Other Traits
@@ -37,9 +38,10 @@ Simulation:
   3. More Species
   4. Depiction of Speices
   5. Shared Resources (Intelligence Required)
-  6. Wars
+  6. ~~Wars~~
   7. ~~Mass Extinction From Illness~~
   8. Include Map
+  9. Include mutating, viruses that weakens fitness or kills
 
 Display:
   1. Just Make it Better
