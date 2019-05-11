@@ -2,7 +2,7 @@ import random
 import NextGen as ng
 from NextGen import Stats, MassExtinction
 
-pop_n = [33, 33, 33]  # Number of: Humans, Gritiss, Drackonians
+pop_n = [3333, 3333, 3333]  # Number of: Humans, Gritiss, Drackonians
 weights = [random.random() for i in range(5)]
 
 mass_extinction = MassExtinction()
@@ -11,7 +11,7 @@ stats = Stats()
 print_every = 3
 prob_illness = .001
 prob_war = .0001
-prob_species_war = 1
+prob_species_war = .0001
 to_fight = .8
 to_fight_species_war = .8
 pause = True
