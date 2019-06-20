@@ -11,7 +11,7 @@ stats = Stats()
 print_every = 3
 prob_illness = .001
 prob_war = .0001
-prob_species_war = .0001
+prob_species_war = .01
 to_fight = .8
 to_fight_species_war = .8
 pause = True
@@ -20,6 +20,7 @@ stats.weights_summary(weights)
 generation = 0
 population = ng.generate_population(pop_n)
 while True:
+    ng.check_pulse(population)
     if generation % print_every == 0:
         print()
     stats.counting(population, generation, print_every=print_every)
