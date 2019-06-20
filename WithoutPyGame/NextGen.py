@@ -1,6 +1,6 @@
 import random
-import numpy as np
 from random import shuffle
+import numpy as np
 
 species = [
     "Human",
@@ -37,62 +37,56 @@ class Stats:
                 print(f"{trait_list[i]}: {weights[i]:.2f} - ", end="")
 
     def creatures_summary(self, population, weights, generation=0, print_every=1):
-        check_pulse(population)
-
         if generation % print_every == 0:
+            # Separate creatures by species
             humans = []
-            human_count = 0
             gritiss = []
-            gritis_count = 0
             drakonians = []
-            drakonian_count = 0
             for creature in population:
                 if creature[0][1] == species[0]:
                     humans.append(creature)
-                    human_count += 1
                 elif creature[0][1] == species[1]:
                     gritiss.append(creature)
-                    gritis_count += 1
                 else:
                     drakonians.append(creature)
-                    drakonian_count += 1
 
-            creature1 = []
+            # Calculate medians for all traits and
+            human_median_traits = []
             for i in range(len(trait_list)):
                 trait = []
                 for human in humans:
                     trait.append(human[i + 1][1])
-                creature1.append(np.median(trait))
+                human_median_traits.append(np.median(trait))
             fitness1 = 0
             for index in range(num_of_traits):
-                fitness1 += creature1[index] * weights[index]
+                fitness1 += human_median_traits[index] * weights[index]
 
-            creature2 = []
+            gritis_median_traits = []
             for i in range(len(trait_list)):
                 trait = []
                 for gritis in gritiss:
                     trait.append(gritis[i + 1][1])
-                creature2.append(np.median(trait))
+                gritis_median_traits.append(np.median(trait))
             fitness2 = 0
             for index in range(num_of_traits):
-                fitness2 += creature2[index] * weights[index]
+                fitness2 += gritis_median_traits[index] * weights[index]
 
-            creature3 = []
+            drakonian_median_traits = []
             for i in range(len(trait_list)):
                 trait = []
                 for drakonian in drakonians:
                     trait.append(drakonian[i + 1][1])
-                creature3.append(np.median(trait))
+                drakonian_median_traits.append(np.median(trait))
             fitness3 = 0
             for index in range(num_of_traits):
-                fitness3 += creature3[index] * weights[index]
+                fitness3 += drakonian_median_traits[index] * weights[index]
 
-            print(" " * 16 + "Medians")
-            final = [["Human"] + [fitness1] + creature1]
-            final.append(["Gritis"] + [fitness2] + creature2)
-            final.append(["Drakonian"] + [fitness3] + creature3)
+            # Combine species into on array
+            final = [["Human"] + [fitness1] + human_median_traits]
+            final.append(["Gritis"] + [fitness2] + gritis_median_traits)
+            final.append(["Drakonian"] + [fitness3] + drakonian_median_traits)
 
-            traits = [
+            updated_trait_list = [
                 'Species',
                 'Score',
                 'Feet',
@@ -102,41 +96,33 @@ class Stats:
                 'Power'
             ]
 
-            max_str_len = 0
-            for species_name in species:
-                if max_str_len < len(species_name):
-                    max_str_len = len(species_name)
+            # Find largest string length
+            max_str_len = max(len(max(species, key=len)), len(max(final, key=len)))
+            max_trait_name_len = len(max(updated_trait_list, key=len))
 
-            for trait in final:
-                if max_str_len < len(trait):
-                    max_str_len = len(trait)
-
-            max_trait_name_len = 0
-            for trait in traits:
-                if max_trait_name_len < len(trait):
-                    max_trait_name_len = len(trait)
-
-            #   Species  Score               Height   Weight   IQ      Speed   Strength
+            # Print out medians traits for all species
+            #   Species  Score               Height  Weight   IQ       Speed   Strength
             # [['Human', 150.49075649967057, 67.002, 149.455, 100.022, 39.695, 39.763],
-            for trait in range(len(traits)):
+            print(" " * 16 + "Medians")
+            for trait in range(len(updated_trait_list)):
                 print()
-                print(traits[trait] + " " * (max_trait_name_len - len(traits[trait])), end=" ")
+                print(updated_trait_list[trait] + " " * (max_trait_name_len - len(updated_trait_list[trait])), end=" ")
                 for creature in final:
-                    if traits[trait] == "Species":
+                    if updated_trait_list[trait] == "Species":
                         print(creature[trait], end=" " * (max_str_len - len(creature[trait])))
-                    elif traits[trait] == "Score":
+                    elif updated_trait_list[trait] == "Score":
                         if np.isnan(creature[trait]):
                             print("Extinct", end=" " * (max_str_len - len(str("Extinct"))))
                         else:
                             rounded_score = round(creature[trait], 2)
                             print(rounded_score, end=" " * (max_str_len - len(str(rounded_score))))
                     elif np.isnan(creature[trait]):
-                        if traits[trait] == "Feet":
+                        if updated_trait_list[trait] == "Feet":
                             print("Nan", end=" " * (max_str_len - len(str("Nan"))))
                         else:
                             print("Nan", end=" " * (max_str_len - len(str("Nan"))))
                     else:
-                        if traits[trait] == "Feet":
+                        if updated_trait_list[trait] == "Feet":
                             feet = int(creature[trait] / 12)
                             inches = int(creature[trait]) % 12
                             height = f"{feet}'{inches}\""
@@ -147,29 +133,27 @@ class Stats:
             print()
 
     def counting(self, population, generation, print_every=1):
-        check_pulse(population)
-
-        human_count = 0
-        gritis_count = 0
-        drakonian_count = 0
-        for creature in population:
-            if creature[0][1] == species[0]:
-                human_count += 1
-            elif creature[0][1] == species[1]:
-                gritis_count += 1
-            else:
-                drakonian_count += 1
-
-        dom_proportion = max(drakonian_count, max(human_count, gritis_count)) / len(population)
-        dom_species = species[
-            [human_count, gritis_count, drakonian_count].index(max(drakonian_count, max(human_count, gritis_count)))]
-        if human_count == 0:
-            human_count = "Extinct"
-        if gritis_count == 0:
-            gritis_count = "Extinct"
-        if drakonian_count == 0:
-            drakonian_count = "Extinct"
         if generation % print_every == 0:
+            human_count = 0
+            gritis_count = 0
+            drakonian_count = 0
+            for creature in population:
+                if creature[0][1] == species[0]:
+                    human_count += 1
+                elif creature[0][1] == species[1]:
+                    gritis_count += 1
+                else:
+                    drakonian_count += 1
+
+            dom_proportion = max(drakonian_count, max(human_count, gritis_count)) / len(population)
+            dom_species = species[
+                [human_count, gritis_count, drakonian_count].index(max(drakonian_count, max(human_count, gritis_count)))]
+            if human_count == 0:
+                human_count = "Extinct"
+            if gritis_count == 0:
+                gritis_count = "Extinct"
+            if drakonian_count == 0:
+                drakonian_count = "Extinct"
             print(f"Gen {generation} |")
             print(f"DOMINATING SPECIES: {dom_species}\nProportion of {dom_species}s: {dom_proportion * 100:.2f}%")
             print(
@@ -361,26 +345,20 @@ class Creatures:
 
 
 def check_pulse(population):
-    try:
-        human_count = 0
-        gritis_count = 0
-        drakonian_count = 0
-        for creature in population:
-            try:
-                if creature[0][1] == species[0]:
-                    human_count += 1
-                elif creature[0][1] == species[1]:
-                    gritis_count += 1
-                else:
-                    drakonian_count += 1
-            except:
-                raise Exception(creature)
+    human_count = 0
+    gritis_count = 0
+    drakonian_count = 0
+    for creature in population:
+        if creature[0][1] == species[0]:
+            human_count += 1
+        elif creature[0][1] == species[1]:
+            gritis_count += 1
+        else:
+            drakonian_count += 1
 
-        if [human_count, gritis_count, drakonian_count].count(0) > 1 \
-                and human_count + gritis_count + drakonian_count < 2:
-            raise Exception("\n\nAll Species Extinct... This is what happens when you play god")
-    except Exception:
-        raise Exception("\n\nSimulation Broken... This is what happens when you play god")
+    if [human_count, gritis_count, drakonian_count].count(0) > 1 \
+            and human_count + gritis_count + drakonian_count < 2:
+        raise Exception("\n\nAll Species Extinct... This is what happens when you play god")
 
 
 def new_blood(weights, humans_medians, gritiss_medians, drakonians_medians, human_count, gritis_count, drakonian_count):
@@ -646,7 +624,8 @@ def crossover(population):
     for creature in range((len(population))):
         to_breed_with = random.randint(0, len(population) - 1)
         if prob_crossover <= random.random() and population[creature][0][1] == population[to_breed_with][0][1]:
-            for i in range(1, max_num_kids):
+            make_child()
+            for i in range(2, max_num_kids):
                 prob_of_next_child = 0.4 / i
                 if prob_of_next_child <= random.random() or i == 1:
                     make_child()
@@ -682,3 +661,57 @@ def evolve(population, weights):
         return breed(select_fittest(population, fitness_scores, weights))
     except Exception:
         raise Exception("\n\nSimulation Broken... This is what happens when you play god")
+
+
+
+# r = random.randint(2, len(species))
+# possible_fighting = species
+# species_fighting = [possible_fighting.pop(random.randint(0, len(possible_fighting) - 1)) for i in range(r)]
+#
+# initial_counts = []
+# species_war = []
+# for specie_fighting in species_fighting:
+#     fighting = []
+#     for creature in population:
+#         if creature[0][1] == specie_fighting:
+#             fighting.append(creature)
+#     initial_counts.append(len(fighting))
+#     species_war.append(fighting)
+#
+# fitness_scores = []
+# for specie in species_war:
+#     fitness_scores.append(calc_fitness(specie, weights))
+#
+# i = 0
+# a = 0
+# try:
+#     while i <= int(len(population)):
+#         cluster_indexes = []
+#         for specie in range(len(species_war)):
+#             if len(species_war[specie]) > 10:
+#                 cluster_indexes.append([(specie, random.randint(0, len(species_war[specie]) - 1)) for i in range(random.randint(1, 10))])
+#             else:
+#                 cluster_indexes.append([(specie, random.randint(0, len(species_war[specie]) - 1)) for i in range(random.randint(1, len(species_war[specie]) - 1))])
+#
+#         small_fight = []
+#         for cluster in cluster_indexes:
+#             cluster_fitness = []
+#             for creature in cluster:
+#                 cluster_fitness.append(fitness_scores[creature[0]][creature[1]])
+#             small_fight.append(sum(cluster_fitness))
+#
+#         cluster_indexes.pop(small_fight.index(max(small_fight)))
+#
+#         a += 1
+#
+#         dead = []
+#         for cluster in cluster_indexes:
+#             for index in cluster:
+#                 dead.append(species_war[index[0]][index[1]])
+#
+#         for cluster in cluster_indexes:
+#             for index in range(len(cluster)):
+#                 species_war[cluster[index][0]].remove(dead[index])
+#
+# except Exception:
+#     raise Exception("\n\nAll Species Extinct... This is what happens when you play god")
