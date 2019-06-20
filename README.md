@@ -41,7 +41,7 @@ Simulation:
   6. ~~Wars~~
   7. ~~Mass Extinction From Illness~~
   8. Include Map
-  9. Include Mutating, Viruses that Weak Fitness or Kills
+  9. Include Mutating Viruses that Weak Fitness or Kills
 
 Display:
   1. Just Make it Better
