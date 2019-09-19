@@ -32,14 +32,13 @@ Display:
 ***
 
 Simulation:
-  1. Adjust Pack Hunting
-  2. Small, Fast Depiction of Life
-  3. More Species
-  4. Depiction of Speices
-  5. Shared Resources (Intelligence Required)
-  6. ~~Wars~~
-  7. ~~Mass Extinction From Illness~~
-  8. Include Mutating Viruses that Weak Fitness or Kills
+  1. Small, Fast Depiction of Life
+  2. More Species
+  3. Depiction of Speices
+  4. ~~Shared Resources (Intelligence Required)~~
+  5. ~~Wars~~
+  6. ~~Mass Extinction From Illness~~
+  7. Include Mutating Viruses that Weak Fitness or Kills
 
 Display:
-  1. Use Blender to display creatures!!
+  1. Use Blender to display creatures!!!
