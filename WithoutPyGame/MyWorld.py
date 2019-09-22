@@ -11,7 +11,7 @@ stats = Stats()
 mass_effect = MassEffect()
 utils = Utils()
 print_every = 2
-print_plots_every = 10
+print_plots_every = 50
 num_data_points = 5
 prob_illness = .0001
 prob_war = .0001
@@ -23,6 +23,7 @@ to_fight_species_war = 0.8
 to_fight_civil_war = 0.8
 pause = False
 pause_for_plot = True
+save_plot = True
 
 weights = utils.create_weights()
 stats.weights_summary(weights, pause)
@@ -34,7 +35,7 @@ while True:
     utils.check_pulse(population)
     stats.counting(population, generation, print_every=print_every)
     stats.creatures_summary(population, weights, generation, print_every=print_every)
-    stats.show_nn_bar_graph(utils.get_median_nn_stats(population), generation, print_plots_every=print_plots_every, pause_for_plot=pause_for_plot)
+    stats.show_nn_bar_graph(utils.get_median_nn_stats(population), generation, save_plot=save_plot, print_plots_every=print_plots_every, pause_for_plot=pause_for_plot)
 
     population = ng.evolve(population, weights)
 
