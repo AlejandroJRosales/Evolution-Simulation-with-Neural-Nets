@@ -1,116 +1,92 @@
+import sys
 import random
-from random import shuffle
+import matplotlib.pyplot as plt
 import numpy as np
 
 species = [
-    "Human",
+    "Charlen",
     "Gritis",
     "Drakonian"
 ]
 trait_list = [
     'Height',
     'Weight',
-    'IQ',
     'Speed',
-    'Power'
+    'Power',
+    'Neural Net W1',
+    'Neural Net W2'
 ]
-prob_crossover = 0.8
-prob_mutation = 0.5
-mutation_rate = .1
-max_num_kids = 6
-tournament_min = 3
-tournament_max = 6
-required_pack_size = 3
-prob_infected = .7
-prob_change_fight = .2
+prob_crossover = 0.001
+prob_mutation = 0.35
+mutation_rate = 0.001
+max_num_kids = 5
+kids_after_start_prob = 0.5
 num_of_traits = len(trait_list)
+prob_change_fighters = 0.2
+damage_damper = .8
+nn_weights1_len = 6
+nn_weights2_len = 6
 
 
 class Stats:
-    def weights_summary(self, weights):
-        print(trait_list[weights.index(max(weights))], "is key")
+    def weights_summary(self, weights, pause=True):
         print(f"Weights rounded to four decimal places: ", end="")
-        for i in range(len(trait_list)):
+        for i in range(len(weights)):
             if i == len(trait_list) - 1:
                 print(f"{trait_list[i]}: {weights[i]:.2f}")
             else:
-                print(f"{trait_list[i]}: {weights[i]:.2f} - ", end="")
+                print(f"{trait_list[i]}: {weights[i]:.2f} : ", end="")
+        if pause:
+            input("\nPress ENTER to continue...")
 
     def creatures_summary(self, population, weights, generation=0, print_every=1):
         if generation % print_every == 0:
-            # Separate creatures by species
-            humans = []
-            gritiss = []
-            drakonians = []
-            for creature in population:
-                if creature[0][1] == species[0]:
-                    humans.append(creature)
-                elif creature[0][1] == species[1]:
-                    gritiss.append(creature)
-                else:
-                    drakonians.append(creature)
+            utils = Utils()
+            charlen_median_traits, gritis_median_traits, drakonian_median_traits = utils.get_medians(population)
 
-            # Calculate medians for all traits and
-            human_median_traits = []
-            for i in range(len(trait_list)):
-                trait = []
-                for human in humans:
-                    trait.append(human[i + 1][1])
-                human_median_traits.append(np.median(trait))
             fitness1 = 0
-            for index in range(num_of_traits):
-                fitness1 += human_median_traits[index] * weights[index]
+            for index in range(len(weights)):
+                fitness1 += charlen_median_traits[index] * weights[index]
 
-            gritis_median_traits = []
-            for i in range(len(trait_list)):
-                trait = []
-                for gritis in gritiss:
-                    trait.append(gritis[i + 1][1])
-                gritis_median_traits.append(np.median(trait))
             fitness2 = 0
-            for index in range(num_of_traits):
+            for index in range(len(weights)):
                 fitness2 += gritis_median_traits[index] * weights[index]
 
-            drakonian_median_traits = []
-            for i in range(len(trait_list)):
-                trait = []
-                for drakonian in drakonians:
-                    trait.append(drakonian[i + 1][1])
-                drakonian_median_traits.append(np.median(trait))
             fitness3 = 0
-            for index in range(num_of_traits):
+            for index in range(len(weights)):
                 fitness3 += drakonian_median_traits[index] * weights[index]
 
             # Combine species into on array
-            final = [["Human"] + [fitness1] + human_median_traits]
+            # print(fitness1)
+            final = [["Charlen"] + [fitness1] + charlen_median_traits]
             final.append(["Gritis"] + [fitness2] + gritis_median_traits)
             final.append(["Drakonian"] + [fitness3] + drakonian_median_traits)
 
             updated_trait_list = [
                 'Species',
-                'Score',
+                'Fitness',  # Fitness Added
                 'Feet',
                 'lbs',
-                'IQ',
                 'Speed',
-                'Power'
+                'Power',
+                'Neural Net W1',
+                'Neural Net W2'
             ]
 
             # Find largest string length
-            max_str_len = max(len(max(species, key=len)), len(max(final, key=len)))
+            max_str_len = max(len(max(species, key=len)), len(max(final, key=len))) - 2
             max_trait_name_len = len(max(updated_trait_list, key=len))
 
             # Print out medians traits for all species
-            #   Species  Score               Height  Weight   IQ       Speed   Strength
-            # [['Human', 150.49075649967057, 67.002, 149.455, 100.022, 39.695, 39.763],
-            print(" " * 16 + "Medians")
-            for trait in range(len(updated_trait_list)):
-                print()
+            print(" " * 22 + "Medians")
+            for trait in range(len(updated_trait_list) - 2):
+                if trait != 0:
+                    print()
                 print(updated_trait_list[trait] + " " * (max_trait_name_len - len(updated_trait_list[trait])), end=" ")
                 for creature in final:
                     if updated_trait_list[trait] == "Species":
                         print(creature[trait], end=" " * (max_str_len - len(creature[trait])))
-                    elif updated_trait_list[trait] == "Score":
+                    elif updated_trait_list[trait] == "Fitness":
                         if np.isnan(creature[trait]):
                             print("Extinct", end=" " * (max_str_len - len(str("Extinct"))))
                         else:
@@ -130,52 +106,109 @@ class Stats:
                         else:
                             trait_rounded = round(creature[trait], 2)
                             print(trait_rounded, end=" " * (max_str_len - len(str(trait_rounded))))
+
+            nn_input = ["c1 fitness",
+                        "c2 fitness",
+                        "c1 health",
+                        "c2 health",
+                        "resource reward",
+                        "c2 resources"]
+
+            # Use spaces because of difference in use from pycharm to pythonista
+            print("\n\n", " " * 9, "Neural Network Medians")
+            # print("  Input Names", " " * 11, "Weights")
+            print(" " * 19, "C.      G.      D.")
+            print(" " * 16, "W1")
+            for col in range(nn_weights1_len):
+                input_name = nn_input[col]
+                print(input_name, end=" " * ((len("resource reward") + 2) - len(input_name)))
+                for row in range(len(species)):
+                    try:
+                        weight = round(float(final[row][6][col]), 4)
+                    except:
+                        weight = np.nan
+                    print(weight, end=" " * (8 - len(str(weight))))
+                print()
+            print(" " * 16, "W2")
+            for col in range(nn_weights2_len):
+                print(" " * (len("resource reward") + 2), end="")
+                for row in range(len(species)):
+                    try:
+                        weight = round(float(final[row][7][col]), 4)
+                    except:
+                        weight = np.nan
+                    print(weight, end=" " * (8 - len(str(weight))))
+                print()
             print()
 
     def counting(self, population, generation, print_every=1):
         if generation % print_every == 0:
-            human_count = 0
-            gritis_count = 0
-            drakonian_count = 0
-            for creature in population:
-                if creature[0][1] == species[0]:
-                    human_count += 1
-                elif creature[0][1] == species[1]:
-                    gritis_count += 1
-                else:
-                    drakonian_count += 1
+            print()
+            utils = Utils()
+            charlen_count, gritis_count, drakonian_count = utils.count_creatures(population)
 
-            dom_proportion = max(drakonian_count, max(human_count, gritis_count)) / len(population)
-            dom_species = species[
-                [human_count, gritis_count, drakonian_count].index(max(drakonian_count, max(human_count, gritis_count)))]
-            if human_count == 0:
-                human_count = "Extinct"
+            if charlen_count == 0:
+                charlen_count = "Extinct"
             if gritis_count == 0:
                 gritis_count = "Extinct"
             if drakonian_count == 0:
                 drakonian_count = "Extinct"
             print(f"Gen {generation} |")
-            print(f"DOMINATING SPECIES: {dom_species}\nProportion of {dom_species}s: {dom_proportion * 100:.2f}%")
-            print(
-                f"{human_count} Human\n{gritis_count} Gritis\n{drakonian_count} Drakonian\n{len(population)} total creatures")
+            print("Counts:")
+            print(f"\t{charlen_count:,} Charlen") if isinstance(charlen_count, int) else print(f"\tCharlen"
+                                                                                               f"{charlen_count}")
+            print(f"\t{gritis_count:,} Gritis") if isinstance(gritis_count, int) else print(f"\tGritis {gritis_count}")
+            print(f"\t{drakonian_count:,} Drakonian") if isinstance(drakonian_count, int) else print(
+                f"\tDrakonian {drakonian_count}")
+            print(f"\t{len(population):,} total creatures")
+
+    def show_nn_bar_graph(self, nn_medians, generation, print_plots_every=500, pause_for_plot=True):
+        if generation % print_plots_every == 0 and generation != 0:
+            nn_input = ["c1 fitness",
+                        "c2 fitness",
+                        "c1 health",
+                        "c2 health",
+                        "resource reward",
+                        "c2 resources"]
+            fig, ax = plt.subplots()
+            y = np.arange(len(nn_input)) * 4
+            charlen_weights = nn_medians[0]
+            gritis_medians = nn_medians[1]
+            drakonian_medians = nn_medians[2]
+            ax.barh(y - 1, charlen_weights, align='center', color='black', label="Charlen")
+            ax.barh(y, gritis_medians, align='center', color='red', label="Gritis")
+            ax.barh(y + 1, drakonian_medians, align='center', color='blue', label="Drakonian")
+            ax.set_yticks(y)
+            ax.set_yticklabels(nn_input)
+            ax.invert_yaxis()
+            plt.subplots_adjust(left=0.3)
+            plt.legend(loc='best')
+            plt.show()
+            plt.savefig('median_nn_weights.png')
+            if pause_for_plot:
+                input("\nPress ENTER to continue...")
 
 
-class MassExtinction:
-    def infect(self, population, pause=True):
-        safe_population = []
-        for creature in population:
-            if prob_infected <= random.random():
-                safe_population.append(creature)
+class MassEffect:
+    def infect(self, population, prob_illness, prob_infected_individuals, pause=True):
+        if random.random() <= prob_illness:
+            safe_population = []
+            for creature in population:
+                if prob_infected_individuals <= random.random():
+                    safe_population.append(creature)
 
-        if pause:
-            print(f"\nINFECTED: {1 - len(safe_population)/len(population)}% died")
-            input("\nPress ENTER to continue...")
-        return safe_population
+            if pause:
+                print(f"\nINFECTED: {1 - len(safe_population) / len(population)}% died")
+                input("\nPress ENTER to continue...")
 
-    def war(self, population, weights, to_fight, pause=True):
-        initial_pop_size = len(population)
+            # So population safe population doesn't need to be defined outside condition
+            population = safe_population
 
-        try:
+        return population
+
+    def war(self, population, prob_war, weights, to_fight, pause=True):
+        if random.random() <= prob_war:
+            initial_pop_size = len(population)
             creature1 = random.randint(0, len(population) - 1)
             creature2 = random.randint(0, len(population) - 1)
             for a in range(int((len(population) - 1) * to_fight), 0, -1):
@@ -184,310 +217,381 @@ class MassExtinction:
                 if creature2 >= len(population):
                     creature2 = random.randint(0, len(population) - 1)
 
-                if calc_fitness([population[creature1]], weights) < calc_fitness([population[creature2]], weights):
+                creature1_fitness = calc_fitness([population[creature1]], weights)[0]
+                creature2_fitness = calc_fitness([population[creature2]], weights)[0]
+                boost1 = random.randint(1, 5) * .1
+                boost2 = random.randint(1, 5) * .1
+                creature1_fitness = creature1_fitness + (
+                            creature1_fitness * boost1) if random.random() <= .5 else creature1_fitness - (
+                            creature1_fitness * boost1)
+                creature2_fitness = creature2_fitness + (
+                            creature2_fitness * boost2) if random.random() <= .5 else creature2_fitness - (
+                            creature2_fitness * boost2)
+
+                if creature1_fitness < creature2_fitness:
                     del population[creature1]
                     creature1 = random.randint(0, len(population) - 1)
-                elif calc_fitness([population[creature1]], weights) >= calc_fitness([population[creature2]], weights):
+                elif creature1_fitness >= creature2_fitness:
                     del population[creature2]
                     creature2 = random.randint(0, len(population) - 1)
 
-                if random.random() <= prob_change_fight:
+                if random.random() <= prob_change_fighters:
                     creature1 = random.randint(0, len(population) - 1)
                     creature2 = random.randint(0, len(population) - 1)
 
-        except Exception:
-            raise Exception("\n\nAll Species Extinct... This is what happens when you play god")
+            print(f"\nWORLD WAR: {(1 - len(population) / initial_pop_size) * 100:.2f}% died")
+            if pause:
+                input("\nPress ENTER to continue...")
 
-        if pause:
-            print(f"\nWORLD WAR: {round((1 - len(population) / initial_pop_size) * 100, 2)}% died")
-            input("\nPress ENTER to continue...")
         return population
 
-    def species_war(self, population, weights, to_fight, pause=True):
-        # Method to get specie index that is not similar to the other creature fighting and its creature index
-        def select_creature(other_specie_index):
-            specie_index = random.randint(0, len(species_fighting) - 1)
-            while specie_index == other_specie_index:
+    def species_war(self, population, prob_species_war, weights, to_fight, pause=True):
+        if random.random() <= prob_species_war:
+            # Method to get specie index that is not similar to the other creature fighting and its creature index
+            def select_creature(other_specie_index):
                 specie_index = random.randint(0, len(species_fighting) - 1)
-            index = random.randint(0, len(species_war[specie_index]) - 1)
-            return specie_index, index
+                while specie_index == other_specie_index:
+                    specie_index = random.randint(0, len(species_fighting) - 1)
+                index = random.randint(0, len(species_war[specie_index]) - 1)
 
-        # Select names of species that will fight
-        r = random.randint(2, len(species))
-        possible_fighting = []
-        for specie in species:
-            possible_fighting.append(specie)
-        species_fighting = [possible_fighting.pop(random.randint(0, len(possible_fighting) - 1)) for i in range(r)]
+                return specie_index, index,
 
-        # Collect initial counts for each species and categorize species from population
-        initial_counts = []
-        species_war = []
-        for specie_fighting in species_fighting:
+            # Select names of species that will fight
+            r = random.randint(2, len(species))
+            possible_fighting = []
+            for specie in species:
+                possible_fighting.append(specie)
+            species_fighting = [possible_fighting.pop(random.randint(0, len(possible_fighting) - 1)) for i in range(r)]
+
+            # Collect initial counts for each species and categorize species from population
+            initial_counts = []
+            species_war = []
+            for specie_fighting in species_fighting:
+                fighting = []
+                for i in range(len(population) - 1, 0, -1):
+                    if population[i][0][1] == specie_fighting:
+                        fighting.append(population.pop(i))
+                initial_counts.append(len(fighting))
+                species_war.append(fighting)
+
+            # Check to see of their are enough creatures in each species fighting, to fight
+            if initial_counts.count(0) > 0:
+                if initial_counts.count(0) > len(species_fighting) - 2:
+                    species_war = []
+                    for specie_fighting in species_war:
+                        species_war += specie_fighting
+                    np.random.shuffle(species_war)
+
+                    return species_war + population
+                else:
+                    for index in range(len(initial_counts) - 1, 0, -1):
+                        if initial_counts[index] == 0:
+                            del species_war[index]
+                            del initial_counts[index]
+                            del species_fighting[index]
+
+            # The actual fight
+            specie1 = random.randint(0, len(species_fighting) - 1)
+            index1 = random.randint(0, len(species_war[specie1]) - 1)
+            specie2, index2 = select_creature(specie1)
+            # smallest_specie_size = min([len(specie) for specie in species_war])
+            smallest_specie_size = len(min(species_war, key=len))
+            for a in range(int((smallest_specie_size - 1) * to_fight), 0, -1):
+                if len(min(species_war, key=len)) == 0:
+                    break
+                if index1 >= len(species_war[specie1]):
+                    specie1, index1 = select_creature(specie2)
+                if index2 >= len(species_war[specie2]):
+                    specie2, index2 = select_creature(specie1)
+
+                # Calculate fitness. Here we +- 10-50% power of creature to make it intereseting
+                creature1_fitness = calc_fitness([species_war[specie1][index1]], weights)[0]
+                creature2_fitness = calc_fitness([species_war[specie2][index2]], weights)[0]
+                boost1 = random.randint(1, 5) * .1
+                boost2 = random.randint(1, 5) * .1
+                creature1_fitness = creature1_fitness + (
+                            creature1_fitness * boost1) if random.random() <= .5 else creature1_fitness - (
+                            creature1_fitness * boost1)
+                creature2_fitness = creature2_fitness + (
+                            creature2_fitness * boost2) if random.random() <= .5 else creature2_fitness - (
+                            creature2_fitness * boost2)
+
+                # The actual actual fight
+                if creature1_fitness < creature2_fitness:
+                    del species_war[specie1][index1]
+                    specie1, creature1 = select_creature(specie2)
+                elif creature1_fitness > creature2_fitness:
+                    del species_war[specie2][index2]
+                    specie2, creature2 = select_creature(specie1)
+
+                if random.random() <= prob_change_fighters:
+                    specie1, creature1 = select_creature(specie2)
+                    specie2, creature2 = select_creature(specie1)
+
+            # Combine the separated species
+            whos_fighting = []
+            for specie_fighting in species_war:
+                whos_fighting += specie_fighting
+            np.random.shuffle(whos_fighting)
+
+            # Final creature count for each species that found to count for casualties
+            final_counts = []
+            for specie_fighting in species_fighting:
+                count = 0
+                for i in range(len(whos_fighting) - 1):
+                    if whos_fighting[i][0][1] == specie_fighting:
+                        count += 1
+                final_counts.append(count)
+
+            print(f"\nSPECIES WAR BETWEEN {species_fighting}: ", end="")
+            for specie in range(len(species_war)):
+                print(
+                    f"{(1 - final_counts[specie] / initial_counts[specie]) * 100:.2f}% of {species_fighting[specie]} died",
+                    end="   ")
+            if pause:
+                input("\n\nPress ENTER to continue...")
+
+            # So population safe population doesn't need to be defined outside condition
+            population += whos_fighting
+
+        return population
+
+    def civil_war(self, population, prob_civil_war, weights, to_fight, pause=True):
+        if random.random() <= prob_civil_war:
+            # Select names of species that will fight
+            specie_fighting = species[random.randint(0, len(species) - 1)]
+
+            # Collect initial counts for each species and categorize specie from population
             fighting = []
             for i in range(len(population) - 1, 0, -1):
                 if population[i][0][1] == specie_fighting:
                     fighting.append(population.pop(i))
-            initial_counts.append(len(fighting))
-            species_war.append(fighting)
+            initial_count = len(fighting)
 
-        # Check to see of their are enough creatures in each species fighting, to fight
-        if initial_counts.count(0) > 0:
-            if initial_counts.count(0) > len(species_fighting) - 2:
-                species_war = []
-                for specie_fighting in species_war:
-                    species_war += specie_fighting
-                shuffle(species_war)
-                return species_war + population
-            else:
-                for index in range(len(initial_counts) - 1, 0, -1):
-                    if initial_counts[index] == 0:
-                        del species_war[index]
-                        del initial_counts[index]
-                        del species_fighting[index]
+            # Check to see of their are enough creatures in the species to fight
+            if initial_count < 2:
+                population += fighting
 
-        # The actual fight
-        specie1 = random.randint(0, len(species_fighting) - 1)
-        index1 = random.randint(0, len(species_war[specie1]) - 1)
-        specie2, index2 = select_creature(specie1)
-        smallest_specie_size = min([len(specie) for specie in species_war])
-        for a in range(int((smallest_specie_size - 1) * to_fight), 0, -1):
-            if index1 >= len(species_war[specie1]):
-                specie1, index1 = select_creature(specie2)
-            if index2 >= len(species_war[specie2]):
-                specie2, index2 = select_creature(specie1)
+                return population
 
-            # Calculate fitness. Here we +- 10-40% power of creature to make it intereseting
-            creature1_fitness = calc_fitness([species_war[specie1][index1]], weights)[0]
-            creature2_fitness = calc_fitness([species_war[specie2][index2]], weights)[0]
-            boost1 = random.randint(1, 4) * .1
-            boost2 = random.randint(1, 4) * .1
-            creature1_fitness = creature1_fitness + (creature1_fitness * boost1) if random.random() <= .5 else creature1_fitness - (creature1_fitness * boost1)
-            creature2_fitness = creature2_fitness + (creature2_fitness * boost2) if random.random() <= .5 else creature2_fitness - (creature2_fitness * boost2)
+            creature1 = random.randint(0, len(fighting) - 1)
+            creature2 = random.randint(0, len(fighting) - 1)
+            for a in range(int((len(fighting) - 1) * to_fight), 0, -1):
+                if creature1 >= len(fighting):
+                    creature1 = random.randint(0, len(fighting) - 1)
+                if creature2 >= len(fighting):
+                    creature2 = random.randint(0, len(fighting) - 1)
 
-            # The actual actual fight
-            if creature1_fitness < creature2_fitness:
-                del species_war[specie1][index1]
-                specie1, creature1 = select_creature(specie2)
-            elif creature1_fitness > creature2_fitness:
-                del species_war[specie2][index2]
-                specie2, creature2 = select_creature(specie1)
+                creature1_fitness = calc_fitness([fighting[creature1]], weights)[0]
+                creature2_fitness = calc_fitness([fighting[creature2]], weights)[0]
+                boost1 = random.randint(1, 5) * .1
+                boost2 = random.randint(1, 5) * .1
+                creature1_fitness = creature1_fitness + (
+                            creature1_fitness * boost1) if random.random() <= .5 else creature1_fitness - (
+                            creature1_fitness * boost1)
+                creature2_fitness = creature2_fitness + (
+                            creature2_fitness * boost2) if random.random() <= .5 else creature2_fitness - (
+                            creature2_fitness * boost2)
 
-            if random.random() <= prob_change_fight:
-                specie1, creature1 = select_creature(specie2)
-                specie2, creature2 = select_creature(specie1)
+                if creature1_fitness < creature2_fitness:
+                    del fighting[creature1]
+                    creature1 = random.randint(0, len(fighting) - 1)
+                elif creature1_fitness >= creature2_fitness:
+                    del fighting[creature2]
+                    creature2 = random.randint(0, len(fighting) - 1)
 
-        # Combine the separated species
-        whos_fighting = []
-        for specie_fighting in species_war:
-            whos_fighting += specie_fighting
-        shuffle(whos_fighting)
+                if random.random() <= prob_change_fighters:
+                    creature1 = random.randint(0, len(fighting) - 1)
+                    creature2 = random.randint(0, len(fighting) - 1)
 
-        # Final creature count for each species that found to count for casualties
-        final_counts = []
-        for specie_fighting in species_fighting:
-            count = 0
-            for i in range(len(whos_fighting) - 1):
-                if whos_fighting[i][0][1] == specie_fighting:
-                    count += 1
-            final_counts.append(count)
+            population += fighting
+            np.random.shuffle(population)
 
-        if pause:
-            print(f"\nSPECIES WAR BETWEEN {species_fighting}: ", end="")
-            for specie in range(len(species_war)):
-                print(f"{round((1 - final_counts[specie] / initial_counts[specie]) * 100, 2)}% of {species_fighting[specie]} died", end="   ")
-            input("\n\nPress ENTER to continue...")
+            print(f"\n{specie_fighting} CIVIL WAR: ", end="")
+            print(f"{(1 - len(fighting) / initial_count) * 100:.2f}% of {specie_fighting} died", end="   ")
+            if pause:
+                input("\n\nPress ENTER to continue...")
 
-        return whos_fighting + population
+        return population
 
 
 class Creatures:
-    def generate_human(self):
-        human = [('Species', 'Human')]
-        mu, sigma = 67, 3  # height
-        human.append(('Height', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = 150, 15  # weight
-        human.append(('Weight', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = 100, 15  # IQ
-        human.append(('IQ', round(np.random.normal(mu, sigma), 3)))
+    def generate_charlen(self):
+        charlen = [('Species', 'Charlen')]
+        mu, sigma = 67, 3  # Height
+        charlen.append(('Height', round(np.random.normal(mu, sigma), 3)))
+        mu, sigma = 150, 15  # Weight
+        charlen.append(('Weight', round(np.random.normal(mu, sigma), 3)))
         mu, sigma = 40, 15  # Speed
-        human.append(('Speed', round(np.random.normal(mu, sigma), 3)))
+        charlen.append(('Speed', round(np.random.normal(mu, sigma), 3)))
         mu, sigma = 40, 15  # Power
-        human.append(('Power', round(np.random.normal(mu, sigma), 3)))
-        return human
+        charlen.append(('Power', round(np.random.normal(mu, sigma), 3)))
+        charlen.append(('Neural Net W1', 2 * np.random.random(nn_weights1_len) - 1))  # Weights for Neural Network
+        charlen.append(('Neural Net W2', 2 * np.random.random(nn_weights2_len) - 1))  # Weights for Neural Network
+
+        return charlen
 
     def generate_gritis(self):
         gritis = [('Species', 'Gritis')]
-        mu, sigma = 96, 5  # height
+        mu, sigma = 96, 5  # Height
         gritis.append(('Height', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = 200, 20  # weight
+        mu, sigma = 200, 20  # Weight
         gritis.append(('Weight', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = 40, 12  # IQ
-        gritis.append(('IQ', round(np.random.normal(mu, sigma), 3)))
         mu, sigma = 40, 15  # Speed
         gritis.append(('Speed', round(np.random.normal(mu, sigma), 3)))
         mu, sigma = 20, 11  # Power
         gritis.append(('Power', round(np.random.normal(mu, sigma), 3)))
+        gritis.append(('Neural Net W1', 2 * np.random.random(nn_weights1_len) - 1))  # Weights for Neural Network
+        gritis.append(('Neural Net W2', 2 * np.random.random(nn_weights2_len) - 1))  # Weights for Neural Network
+
         return gritis
 
     def generate_drakonian(self):
         drakonian = [('Species', 'Drakonian')]
-        mu, sigma = 52, 5  # height
+        mu, sigma = 52, 5  # Height
         drakonian.append(('Height', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = 120, 12  # weight
+        mu, sigma = 120, 12  # Weight
         drakonian.append(('Weight', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = 60, 12  # IQ
-        drakonian.append(('IQ', round(np.random.normal(mu, sigma), 3)))
         mu, sigma = 80, 15  # Speed
         drakonian.append(('Speed', round(np.random.normal(mu, sigma), 3)))
         mu, sigma = 50, 10  # Power
         drakonian.append(('Power', round(np.random.normal(mu, sigma), 3)))
+        drakonian.append(('Neural Net W1', 2 * np.random.random(nn_weights1_len) - 1))  # Weights for Neural Network
+        drakonian.append(('Neural Net W2', 2 * np.random.random(nn_weights2_len) - 1))  # Weights for Neural Network
+
         return drakonian
 
 
-def check_pulse(population):
-    human_count = 0
-    gritis_count = 0
-    drakonian_count = 0
-    for creature in population:
-        if creature[0][1] == species[0]:
-            human_count += 1
-        elif creature[0][1] == species[1]:
-            gritis_count += 1
-        else:
-            drakonian_count += 1
+class Utils:
+    def create_weights(self):
+        return [random.random() if random.randint(0, 1) == 0 else -random.random() for i in range(4)]
 
-    if [human_count, gritis_count, drakonian_count].count(0) > 1 \
-            and human_count + gritis_count + drakonian_count < 2:
-        raise Exception("\n\nAll Species Extinct... This is what happens when you play god")
+    def check_pulse(self, population):
+        if len(population) <= 1:
+            print("\n\nAll Species Extinct... This is what happens when you play god")
+            print("\n" + "=" * 42)
+            sys.exit()
 
+    def count_creatures(self, population):
+        charlen_count = 0
+        gritis_count = 0
+        drakonian_count = 0
+        for creature in population:
+            try:
+                if creature[0][1] == species[0]:
+                    charlen_count += 1
+                elif creature[0][1] == species[1]:
+                    gritis_count += 1
+                else:
+                    drakonian_count += 1
+            except:
+                pass
 
-def new_blood(weights, humans_medians, gritiss_medians, drakonians_medians, human_count, gritis_count, drakonian_count):
-    dom_species = species[
-        [human_count, gritis_count, drakonian_count].index(max(drakonian_count, max(human_count, gritis_count)))]
+        return charlen_count, gritis_count, drakonian_count
 
-    contending_species = []
-    height_mutator = .25
-    weight_mutator = .25
-    iq_mutator = .25
-    speed_mutator = .25
-    power_mutator = .25
-
-    if [human_count, drakonian_count, gritis_count].count(0) == 2:
-        if human_count != 0:
-            human = [('Species', 'Human')]
-            mu, sigma = humans_medians[0], height_mutator  # height
-            human.append(('Height', round(np.random.normal(mu, sigma), 3)))
-            mu, sigma = humans_medians[1], weight_mutator  # weight
-            human.append(('Weight', round(np.random.normal(mu, sigma), 3)))
-            mu, sigma = humans_medians[2], iq_mutator  # IQ
-            human.append(('IQ', round(np.random.normal(mu, sigma), 3)))
-            mu, sigma = humans_medians[3], speed_mutator  # Speed
-            human.append(('Speed', round(np.random.normal(mu, sigma), 3)))
-            mu, sigma = humans_medians[4], power_mutator  # Power
-            human.append(('Power', round(np.random.normal(mu, sigma), 3)))
-            return human
-
-        if gritis_count != 0:
-            gritis = [('Species', 'Gritis')]
-            mu, sigma = gritiss_medians[0], height_mutator  # height
-            gritis.append(('Height', round(np.random.normal(mu, sigma), 3)))
-            mu, sigma = gritiss_medians[1], weight_mutator  # weight
-            gritis.append(('Weight', round(np.random.normal(mu, sigma), 3)))
-            mu, sigma = gritiss_medians[2], iq_mutator  # IQ
-            gritis.append(('IQ', round(np.random.normal(mu, sigma), 3)))
-            mu, sigma = gritiss_medians[3], speed_mutator  # Speed
-            gritis.append(('Speed', round(np.random.normal(mu, sigma), 3)))
-            mu, sigma = gritiss_medians[4], power_mutator  # Power
-            gritis.append(('Power', round(np.random.normal(mu, sigma), 3)))
-            return gritis
-
-        if drakonian_count != 0:
-            drakonian = [('Species', 'Drakonian')]
-            mu, sigma = drakonians_medians[0], height_mutator  # height
-            drakonian.append(('Height', round(np.random.normal(mu, sigma), 3)))
-            mu, sigma = drakonians_medians[1], weight_mutator  # weight
-            drakonian.append(('Weight', round(np.random.normal(mu, sigma), 3)))
-            mu, sigma = drakonians_medians[2], iq_mutator  # IQ
-            drakonian.append(('IQ', round(np.random.normal(mu, sigma), 3)))
-            mu, sigma = drakonians_medians[3], speed_mutator  # Speed
-            drakonian.append(('Speed', round(np.random.normal(mu, sigma), 3)))
-            mu, sigma = drakonians_medians[4], power_mutator  # Power
-            drakonian.append(('Power', round(np.random.normal(mu, sigma), 3)))
-            return drakonian
-
-    else:
-        if dom_species != "Human" and human_count != 0:
-            human = [('Species', 'Human')]
-            mu, sigma = humans_medians[0], height_mutator  # height
-            human.append(('Height', round(np.random.normal(mu, sigma), 3)))
-            mu, sigma = humans_medians[1], weight_mutator  # weight
-            human.append(('Weight', round(np.random.normal(mu, sigma), 3)))
-            mu, sigma = humans_medians[2], iq_mutator  # IQ
-            human.append(('IQ', round(np.random.normal(mu, sigma), 3)))
-            mu, sigma = humans_medians[3], speed_mutator  # Speed
-            human.append(('Speed', round(np.random.normal(mu, sigma), 3)))
-            mu, sigma = humans_medians[4], power_mutator  # Power
-            human.append(('Power', round(np.random.normal(mu, sigma), 3)))
-            contending_species.append(human)
-
-        if dom_species != "Gritis" and gritis_count != 0:
-            gritis = [('Species', 'Gritis')]
-            mu, sigma = gritiss_medians[0], height_mutator  # height
-            gritis.append(('Height', round(np.random.normal(mu, sigma), 3)))
-            mu, sigma = gritiss_medians[1], weight_mutator  # weight
-            gritis.append(('Weight', round(np.random.normal(mu, sigma), 3)))
-            mu, sigma = gritiss_medians[2], iq_mutator  # IQ
-            gritis.append(('IQ', round(np.random.normal(mu, sigma), 3)))
-            mu, sigma = gritiss_medians[3], speed_mutator  # Speed
-            gritis.append(('Speed', round(np.random.normal(mu, sigma), 3)))
-            mu, sigma = gritiss_medians[4], power_mutator  # Power
-            gritis.append(('Power', round(np.random.normal(mu, sigma), 3)))
-            contending_species.append(gritis)
-
-        if dom_species != "Drakonian" and drakonian_count != 0:
-            drakonian = [('Species', 'Drakonian')]
-            mu, sigma = drakonians_medians[0], height_mutator  # height
-            drakonian.append(('Height', round(np.random.normal(mu, sigma), 3)))
-            mu, sigma = drakonians_medians[1], weight_mutator  # weight
-            drakonian.append(('Weight', round(np.random.normal(mu, sigma), 3)))
-            mu, sigma = drakonians_medians[2], iq_mutator  # IQ
-            drakonian.append(('IQ', round(np.random.normal(mu, sigma), 3)))
-            mu, sigma = drakonians_medians[3], speed_mutator  # Speed
-            drakonian.append(('Speed', round(np.random.normal(mu, sigma), 3)))
-            mu, sigma = drakonians_medians[4], power_mutator  # Power
-            drakonian.append(('Power', round(np.random.normal(mu, sigma), 3)))
-            contending_species.append(drakonian)
-
-        # This is because n_species = 0  so not chosen and dominating species not chosen,
-        # thus len of contending_species = 1. Easier than printing out big chunk of code again
-        if len(contending_species) != 1:
-            fitness_scores = calc_fitness(contending_species, weights)
-            probability = .5
-            new_blood_child_benefit = random.randint(15, 30) / 100
-            if fitness_scores.index(max(fitness_scores)) == 0:
-                probability += new_blood_child_benefit
-            elif fitness_scores.index(max(fitness_scores)) == 1:
-                probability -= new_blood_child_benefit
-            if random.random() <= probability:
-                winner = contending_species[0]
+    def get_middle(self, input_list):
+        if input_list:
+            middle = float(len(input_list)) / 2
+            if middle % 2 != 0:
+                return input_list[int(middle - .5)]
             else:
-                winner = contending_species[1]
-            return winner
+                try:
+                    return (input_list[int(middle)] + input_list[int(middle - 1)]) / 2
+                except:
+                    return input_list[int(middle - .5)]
 
         else:
-            return contending_species[0]
+            return np.nan
+
+    def get_medians(self, population):
+        # Separate creatures by species
+        charlens = []
+        gritiss = []
+        drakonians = []
+        for creature in population:
+            if creature[0][1] == species[0]:
+                charlens.append(creature)
+            elif creature[0][1] == species[1]:
+                gritiss.append(creature)
+            else:
+                drakonians.append(creature)
+
+        # Calculate medians for all traits
+        charlen_median_traits = []
+        for i in range(len(trait_list)):
+            trait = []
+            for charlen in charlens:
+                trait.append(charlen[i + 1][1])
+            charlen_median_traits.append(self.get_middle(trait))
+
+        gritis_median_traits = []
+        for i in range(len(trait_list)):
+            trait = []
+            for gritis in gritiss:
+                trait.append(gritis[i + 1][1])
+            gritis_median_traits.append(self.get_middle(trait))
+
+        drakonian_median_traits = []
+        for i in range(len(trait_list)):
+            trait = []
+            for drakonian in drakonians:
+                trait.append(drakonian[i + 1][1])
+            drakonian_median_traits.append(self.get_middle(trait))
+
+        return [charlen_median_traits, gritis_median_traits, drakonian_median_traits]
+
+    def sigmoid(self, x):
+        return 1 / (1 + np.exp(-round(x, 15)))
+
+    def dot(self, inp, weights):
+        nodes = []
+        for num in inp:
+            node = 0
+            for weight in weights:
+                node += num * weight
+            nodes.append(self.sigmoid(node))
+
+        return nodes
+
+    def get_median_nn_stats(self, population):
+        charlen_median_traits, gritis_median_traits, drakonian_median_traits = self.get_medians(population)
+
+        # Combine species into on array
+        final = [["Charlen"] + charlen_median_traits]
+        final.append(["Gritis"] + gritis_median_traits)
+        final.append(["Drakonian"] + drakonian_median_traits)
+
+        charlen_median_nn_stats = []
+        gritis_median_nn_stats = []
+        drakonian_median_nn_stats = []
+        # Use spaces because of difference in use from pycharm to pythonista
+        for col in range(nn_weights1_len):
+            for row in range(len(species)):
+                try:
+                    weight = round(float(final[row][5][col]), 4)
+                except:
+                    weight = np.nan
+                if row == 0:
+                    charlen_median_nn_stats.append(weight)
+                if row == 1:
+                    gritis_median_nn_stats.append(weight)
+                if row == 2:
+                    drakonian_median_nn_stats.append(weight)
+
+        return charlen_median_nn_stats, gritis_median_nn_stats, drakonian_median_nn_stats
 
 
 def generate_population(num_of_creatures):
     creatures = Creatures()
     pop_creatures = []
     for i in range(num_of_creatures[0]):
-        pop_creatures.append(creatures.generate_human())
+        pop_creatures.append(creatures.generate_charlen())
     for i in range(num_of_creatures[1]):
         pop_creatures.append(creatures.generate_gritis())
     for i in range(num_of_creatures[2]):
         pop_creatures.append(creatures.generate_drakonian())
-    shuffle(pop_creatures)
+    np.random.shuffle(pop_creatures)
+
     return pop_creatures
 
 
@@ -495,31 +599,30 @@ def calc_fitness(population, weights):
     fitness_scores = []
     for creature in population:
         fitness = 0
-        for index in range(num_of_traits):
+        for index in range(len(weights)):
             fitness += creature[index + 1][1] * weights[index]
         fitness_scores.append(round(fitness, 3))
+
     return fitness_scores
 
 
-def select_fittest(population, fitness_scores, weights):
-    tournament_size = random.randint(tournament_min, tournament_max)
-
-    humans = []
-    human_count = 0
+def select_fittest(population, fitness_scores):
+    charlens = []
+    charlen_count = 0
     gritiss = []
     gritis_count = 0
     drakonians = []
     drakonian_count = 0
     index = 0
-    human_index = 0
+    charlen_index = 0
     gritis_index = 0
     drakonian_index = 0
     for creature in population:
         if creature[0][1] == species[0]:
-            humans.append(creature)
-            human_count += 1
-            if human_count == 1:
-                human_index = index
+            charlens.append(creature)
+            charlen_count += 1
+            if charlen_count == 1:
+                charlen_index = index
         elif creature[0][1] == species[1]:
             gritiss.append(creature)
             gritis_count += 1
@@ -533,9 +636,9 @@ def select_fittest(population, fitness_scores, weights):
 
         index += 1
 
-    if human_count == 1:
-        del population[human_index]
-        del fitness_scores[human_index]
+    if charlen_count == 1:
+        del population[charlen_index]
+        del fitness_scores[charlen_index]
     if gritis_count == 1:
         del population[gritis_index]
         del fitness_scores[gritis_index]
@@ -543,92 +646,154 @@ def select_fittest(population, fitness_scores, weights):
         del population[drakonian_index]
         del fitness_scores[drakonian_index]
 
-    fitter_population = [population[fitness_scores.index(max(fitness_scores))]]
-    pop_keep = random.randint(4, 8) * .1
-    for i in range(int(len(population) * pop_keep)):
-        competitors = []
-        for member in range(tournament_size - 1):
-            competitor_index = random.randint(0, len(fitness_scores) - 1)
-            competitor_fitness = fitness_scores[competitor_index]
-            competitors.append((competitor_index, competitor_fitness))
+    # Momentarily give each creature health and resources
+    for creature, creature_fitness in zip(population, fitness_scores):
+        creature.append(abs(creature_fitness * .5))  # Health
+        creature.append(random.randint(0, 100))  # Resources
 
-        competitors_names = []
-        for competitor in competitors:
-            competitors_names.append(population[competitor[0]][0][1])
+    fighting_count = 0
+    want_2_fight_avg = 0
+    n = len(population)
+    for count in range(len(population)):
+        creature_index = random.randint(0, len(population) - 1)
+        creature = population[creature_index]
+        creature_specie = creature[0][1]
+        creature_fitness = fitness_scores[creature_index] if fitness_scores[creature_index] > 10 else 10
+        creature_resources = creature[len(creature) - 1]
+        creature_health = creature[len(creature) - 2]
+        creature_nn_weights1 = creature[5][1]
+        creature_nn_weights2 = creature[6][1]
 
-        if competitors_names.count("Drakonian") >= required_pack_size:
-            drakonians_competitors = []
-            for competitor in range(len(competitors)):
-                if competitors_names[competitor] == "Drakonian":
-                    drakonians_competitors.append(competitors[competitor])
+        # Make sure creature is not fighting itself
+        competitor_index = creature_index
+        while competitor_index == creature_index:
+            competitor_index = random.randint(0, len(population) - 1)
+        assert competitor_index != creature_index
 
-            for a in range(random.randint(1, 2)):
-                best_fitness_score = 0
-                best_creature = []
-                best_creature_index = 0
-                index = 0
-                for drakonian in drakonians_competitors:
-                    if drakonian[1] > best_fitness_score:
-                        best_fitness_score = drakonian[1]
-                        best_creature = population[drakonian[0]]
-                        best_creature_index = index
-                    index += 1
-                del drakonians_competitors[best_creature_index]
-                fitter_population.append(best_creature)
-        else:
-            r = random.randint(0, len(fitness_scores) - 1)
-            best_fitness_score = fitness_scores[r]
-            best_creature = population[r]
-            for competitor in competitors:
-                if competitor[1] > best_fitness_score:
-                    best_fitness_score = competitor[1]
-                    best_creature = population[competitor[0]]
-            fitter_population.append(best_creature)
+        competitor = population[competitor_index]
+        competitor_specie = competitor[0][1]
+        competitor_fitness = fitness_scores[competitor_index] if fitness_scores[competitor_index] > 10 else 10
+        competitor_resources = competitor[len(competitor) - 1]
+        competitor_health = competitor[len(competitor) - 2]
+        competitor_nn_weights1 = competitor[5][1]
+        competitor_nn_weights2 = competitor[6][1]
 
-    humans_medians = []
-    for i in range(len(trait_list)):
-        trait = []
-        for human in humans:
-            trait.append(human[i + 1][1])
-        humans_medians.append(np.median(trait))
+        resource_reward = random.randint(10, 40)
 
-    gritiss_medians = []
-    for i in range(len(trait_list)):
-        trait = []
-        for gritis in gritiss:
-            trait.append(gritis[i + 1][1])
-        gritiss_medians.append(np.median(trait))
+        # Think
+        utils = Utils()
+        creature_want = utils.dot([creature_fitness,
+                                competitor_fitness,
+                                creature_health,
+                                competitor_health,
+                                resource_reward,
+                                competitor_resources], creature_nn_weights1)
+        creature_want = utils.sigmoid(np.dot(creature_want, creature_nn_weights2))
 
-    drakonians_medians = []
-    for i in range(len(trait_list)):
-        trait = []
-        for drakonian in drakonians:
-            trait.append(drakonian[i + 1][1])
-        drakonians_medians.append(np.median(trait))
+        competitor_want = utils.dot([competitor_fitness,
+                                creature_fitness,
+                                competitor_health,
+                                creature_health,
+                                resource_reward,
+                                creature_resources], competitor_nn_weights1)
+        competitor_want = utils.sigmoid(np.dot(competitor_want, competitor_nn_weights2))
 
-    for i in range(len(population) - len(fitter_population)):
-        winner = new_blood(weights, humans_medians, gritiss_medians, drakonians_medians, human_count, gritis_count,
-                           drakonian_count)
-        fitter_population.append(winner)
-    return fitter_population
+        want_2_fight_avg += (creature_want + competitor_want)/2
+        if creature_want >= .5 and competitor_want >= .5:
+            fighting_count += 1
+            # Resources help give health a boost and fitness a boost as well
+            creature_health += creature_resources * random.randint(1, 4) * .1
+            creature_fitness += creature_resources * random.randint(1, 4) * .1
+            competitor_health += competitor_resources * random.randint(1, 4) * .1
+            competitor_fitness += competitor_resources * random.randint(1, 4) * .1
+
+            if creature_fitness > competitor_fitness:
+                competitor_health -= abs(creature_fitness * damage_damper)
+                competitor_lost_resources = competitor_resources * .75
+                competitor_resources -= competitor_lost_resources
+
+                creature_resources += resource_reward + competitor_lost_resources
+                creature[len(creature) - 1] = creature_resources
+                population[creature_index] = creature
+
+                if competitor_health <= 0:
+                    del population[competitor_index]
+                else:
+                    competitor[len(competitor) - 1] = competitor_resources
+                    competitor[len(competitor) - 2] = competitor_health
+                    population[competitor_index] = competitor
+
+            elif creature_fitness < competitor_fitness:
+                creature_health -= abs(competitor_fitness * damage_damper)
+                creature_lost_resources = creature_resources * .75
+                creature_resources -= creature_lost_resources
+
+                competitor_resources += resource_reward + creature_lost_resources
+                competitor[len(competitor) - 1] = competitor_resources
+                population[competitor_index] = competitor
+
+                if creature_health <= 0:
+                    del population[creature_index]
+                else:
+                    creature[len(creature) - 1] = creature_resources
+                    creature[len(creature) - 2] = creature_health
+                    population[creature_index] = creature
+
+            else:
+                competitor_health -= abs(creature_fitness * damage_damper)
+                if competitor_health <= 0:
+                    del population[competitor_index]
+                else:
+                    competitor[len(competitor) - 2] = competitor_health
+                    population[competitor_index] = competitor
+
+                creature_health -= abs(competitor_fitness * damage_damper)
+                if creature_health <= 0:
+                    del population[creature_index]
+                else:
+                    creature[len(creature) - 2] = creature_health
+                    population[creature_index] = creature
+
+        elif creature_specie == competitor_specie:
+            creature[len(creature) - 1] = creature_resources + (resource_reward * .5)
+            population[creature_index] = creature
+            competitor[len(competitor) - 1] = competitor_resources + (resource_reward * .5)
+            population[competitor_index] = competitor
+
+    print(f"Number of Fights:", fighting_count)
+    print("Creatures want to fight avg: ", want_2_fight_avg/n)
+
+    # Remove temporary health and resources
+    for creature in population:
+        creature.pop(len(creature) - 1)
+        creature.pop(len(creature) - 1)
+    return population
 
 
 def crossover(population):
-    def make_child():
-        parent1 = population[creature]
-        parent2 = population[to_breed_with]
-        r = random.randint(1, num_of_traits)
-        population[creature] = parent1[:r] + parent2[r:]
-        population[to_breed_with] = parent2[:r] + parent1[r:]
-
-    for creature in range((len(population))):
+    for creature in range(len(population) - 1):
         to_breed_with = random.randint(0, len(population) - 1)
-        if prob_crossover <= random.random() and population[creature][0][1] == population[to_breed_with][0][1]:
-            make_child()
-            for i in range(2, max_num_kids):
-                prob_of_next_child = 0.4 / i
+        if random.random() <= prob_crossover and population[creature][0][1] == population[to_breed_with][0][1]:
+            for i in range(1, max_num_kids + 1):
+                prob_of_next_child = kids_after_start_prob / i
                 if prob_of_next_child <= random.random() or i == 1:
-                    make_child()
+                    parent1 = population[creature]
+                    parent2 = population[to_breed_with]
+                    p1_nn_weights1 = parent1[5][1]
+                    p1_nn_weights2 = parent1[6][1]
+                    p2_nn_weights1 = parent2[5][1]
+                    p2_nn_weights2 = parent2[6][1]
+                    r1 = random.randint(0, len(p1_nn_weights1))
+                    r2 = random.randint(0, len(p1_nn_weights2))
+                    parent1[5] = (parent1[5][0], np.concatenate((p1_nn_weights1[:r1], p2_nn_weights1[r1:]), axis=0))
+                    parent1[6] = (parent1[6][0], np.concatenate((p1_nn_weights2[:r2], p2_nn_weights2[r2:]), axis=0))
+                    parent2[5] = (parent2[5][0], np.concatenate((p2_nn_weights1[:r1], p1_nn_weights1[r1:]), axis=0))
+                    parent2[6] = (parent2[6][0], np.concatenate((p2_nn_weights2[:r2], p1_nn_weights2[r2:]), axis=0))
+                    r3 = random.randint(1, num_of_traits)
+                    if random.random() <= .5:
+                        population.insert(random.randint(0, len(population) - 1), parent1[:r3] + parent2[r3:])
+                    else:
+                        population.insert(random.randint(0, len(population) - 1), parent2[:r3] + parent1[r3:])
                 else:
                     break
     return population
@@ -636,18 +801,26 @@ def crossover(population):
 
 def mutation(population):
     for i in range(int((len(population) - 1))):
-        if prob_mutation <= random.random():
+        if random.random() <= prob_mutation:
             creature = population[i]
             for a in range(random.randint(0, num_of_traits - 2)):  # -1 species -1 IndexOutOfBounds
                 index = random.randint(1, num_of_traits)
-                trait = old_trait = creature[index][1]
-                if random.randint(0, 1) == 0:
-                    trait = round(trait + (trait * mutation_rate), 3)
+                if creature[index][0] == "Neural Net W1" or creature[index][0] == "Neural Net W2":
+                    trait = creature[index][1]
+                    for weight in range(len(trait)):
+                        if random.random() <= .7:
+                            trait[weight] *= random.randint(5000, 15000)/10000
+                    creature[index] = (creature[index][0], trait)
                 else:
-                    trait = round(trait - (trait * mutation_rate), 3)
-                creature[index] = (creature[index][0], trait) if trait > 1 else (creature[index][0], old_trait)
-            population.append(creature)
-        return population
+                    trait = old_trait = creature[index][1]
+                    if random.random() <= .5:
+                        trait = round(trait + (trait * mutation_rate), 3)
+                    else:
+                        trait = round(trait - (trait * mutation_rate), 3)
+                    creature[index] = (creature[index][0], trait) if trait > 1 else (creature[index][0], old_trait)
+            population[i] = creature
+
+    return population
 
 
 def breed(population):
@@ -655,63 +828,5 @@ def breed(population):
 
 
 def evolve(population, weights):
-    check_pulse(population)
-    try:
-        fitness_scores = calc_fitness(population, weights)
-        return breed(select_fittest(population, fitness_scores, weights))
-    except Exception:
-        raise Exception("\n\nSimulation Broken... This is what happens when you play god")
-
-
-
-# r = random.randint(2, len(species))
-# possible_fighting = species
-# species_fighting = [possible_fighting.pop(random.randint(0, len(possible_fighting) - 1)) for i in range(r)]
-#
-# initial_counts = []
-# species_war = []
-# for specie_fighting in species_fighting:
-#     fighting = []
-#     for creature in population:
-#         if creature[0][1] == specie_fighting:
-#             fighting.append(creature)
-#     initial_counts.append(len(fighting))
-#     species_war.append(fighting)
-#
-# fitness_scores = []
-# for specie in species_war:
-#     fitness_scores.append(calc_fitness(specie, weights))
-#
-# i = 0
-# a = 0
-# try:
-#     while i <= int(len(population)):
-#         cluster_indexes = []
-#         for specie in range(len(species_war)):
-#             if len(species_war[specie]) > 10:
-#                 cluster_indexes.append([(specie, random.randint(0, len(species_war[specie]) - 1)) for i in range(random.randint(1, 10))])
-#             else:
-#                 cluster_indexes.append([(specie, random.randint(0, len(species_war[specie]) - 1)) for i in range(random.randint(1, len(species_war[specie]) - 1))])
-#
-#         small_fight = []
-#         for cluster in cluster_indexes:
-#             cluster_fitness = []
-#             for creature in cluster:
-#                 cluster_fitness.append(fitness_scores[creature[0]][creature[1]])
-#             small_fight.append(sum(cluster_fitness))
-#
-#         cluster_indexes.pop(small_fight.index(max(small_fight)))
-#
-#         a += 1
-#
-#         dead = []
-#         for cluster in cluster_indexes:
-#             for index in cluster:
-#                 dead.append(species_war[index[0]][index[1]])
-#
-#         for cluster in cluster_indexes:
-#             for index in range(len(cluster)):
-#                 species_war[cluster[index][0]].remove(dead[index])
-#
-# except Exception:
-#     raise Exception("\n\nAll Species Extinct... This is what happens when you play god")
+    fitness_scores = calc_fitness(population, weights)
+    return breed(select_fittest(population, fitness_scores))
