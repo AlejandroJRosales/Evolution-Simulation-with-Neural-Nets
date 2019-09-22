@@ -69,43 +69,48 @@ class Stats:
                 'lbs',
                 'Speed',
                 'Power',
-                'Neural Net W1',
-                'Neural Net W2'
             ]
 
-            # Find largest string length
-            max_str_len = max(len(max(species, key=len)), len(max(final, key=len))) - 2
+            # Find largest string length between extinct, trait length, and species name length
+            max_trait_str_len = max(len("Extinct"), len(max(species, key=len)))
+            for creature in final:
+                for trait in range(1, len(creature) - 2):
+                    competitor = len(str(round(creature[trait], 2)))
+                    if competitor > max_trait_str_len:
+                        max_trait_str_len = competitor
+
+            # Find max trait name length
             max_trait_name_len = len(max(updated_trait_list, key=len))
 
             # Print out medians traits for all species
-            print(" " * 22 + "Medians")
-            for trait in range(len(updated_trait_list) - 2):
+            print(" " * (8 + max_trait_str_len) + "Medians")
+            for trait in range(len(updated_trait_list)):
                 if trait != 0:
                     print()
                 print(updated_trait_list[trait] + " " * (max_trait_name_len - len(updated_trait_list[trait])), end=" ")
                 for creature in final:
                     if updated_trait_list[trait] == "Species":
-                        print(creature[trait], end=" " * (max_str_len - len(creature[trait])))
+                        print(creature[trait], end=" " * (max_trait_str_len - len(creature[trait])))
                     elif updated_trait_list[trait] == "Fitness":
                         if np.isnan(creature[trait]):
-                            print("Extinct", end=" " * (max_str_len - len(str("Extinct"))))
+                            print("Extinct", end=" " * (max_trait_str_len - len(str("Extinct"))))
                         else:
                             rounded_score = round(creature[trait], 2)
-                            print(rounded_score, end=" " * (max_str_len - len(str(rounded_score))))
+                            print(rounded_score, end=" " * (max_trait_str_len - len(str(rounded_score))))
                     elif np.isnan(creature[trait]):
                         if updated_trait_list[trait] == "Feet":
-                            print("Nan", end=" " * (max_str_len - len(str("Nan"))))
+                            print("Nan", end=" " * (max_trait_str_len - len(str("Nan"))))
                         else:
-                            print("Nan", end=" " * (max_str_len - len(str("Nan"))))
+                            print("Nan", end=" " * (max_trait_str_len - len(str("Nan"))))
                     else:
                         if updated_trait_list[trait] == "Feet":
                             feet = int(creature[trait] / 12)
                             inches = int(creature[trait]) % 12
                             height = f"{feet}'{inches}\""
-                            print(height, end=" " * (max_str_len - len(str(height))))
+                            print(height, end=" " * (max_trait_str_len - len(str(height))))
                         else:
                             trait_rounded = round(creature[trait], 2)
-                            print(trait_rounded, end=" " * (max_str_len - len(str(trait_rounded))))
+                            print(trait_rounded, end=" " * (max_trait_str_len - len(str(trait_rounded))))
 
             nn_input = ["c1 fitness",
                         "c2 fitness",
