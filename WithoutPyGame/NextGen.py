@@ -162,7 +162,7 @@ class Stats:
                 f"\tDrakonian {drakonian_count}")
             print(f"\t{len(population):,} total creatures")
 
-    def show_nn_bar_graph(self, nn_medians, generation, print_plots_every=500, pause_for_plot=True):
+    def show_nn_bar_graph(self, nn_medians, generation, save_plot=True, print_plots_every=500, pause_for_plot=True):
         if generation % print_plots_every == 0 and generation != 0:
             nn_input = ["c1 fitness",
                         "c2 fitness",
@@ -181,10 +181,10 @@ class Stats:
             ax.set_yticks(y)
             ax.set_yticklabels(nn_input)
             ax.invert_yaxis()
-            plt.subplots_adjust(left=0.3)
             plt.legend(loc='best')
             plt.show()
-            plt.savefig('median_nn_weights.png')
+            if save_plot:
+                plt.savefig('median_nn_weights.png')
             if pause_for_plot:
                 input("\nPress ENTER to continue...")
 
