@@ -1,7 +1,10 @@
 # Evolution Simulation with Neural Network
 A simple evolution simulation. Basically, it is a glorified genetic algorithm mixed with neuro evolution. There are three species, Charlens, Gritiss, and Drakonians. Each species has a special skill. Each creature comes with a small neural network that, based of the input and weights, tell the creature what to do. Through evolution, each generation becomes better as the weak are weeded out. Through fighting, resources and health come into play. After the weak are weeded out, the strong crossover and their young mutate. (The neural networks evolve with the creatures) A normal distribution is implemented for all traits for the initiation of the starting population. Population size can grow over time or shrink and so can the population sizes of each species, depeneding on the health of the creatures and how smart they are. Extinction is all too real for each species. As a species can overtake them all, infectious disease can wipe out many, and/or a species could go extinct during war.
 
-A simple display of the population gives a summary of how the population is doing. The median creature for each species is shown. Showing their traits and weights of their neural network. The population size of each species and total population size is shown. I am looking to continue to improve this game for the rest of my life. Basically, way down the road, adding in morals and better machine learning and a better, easier-on-the-eyes display. Basically,  to simulate *life* is the goal. A far cry from what I have now, but it is the goal nonetheless. 
+A simple display of the population gives a summary of how the population is doing. The median creature for each species is shown. Showing their traits and weights of their neural network. The population size of each species and total population size is shown. You can also save as many simulations as you want and load them later! 
+
+On a final note:
+  I am looking to continue to improve this game for the rest of my life. Basically, way down the road, adding in morals and better         machine learning and a better, easier-on-the-eyes display. Basically,  to simulate *life* is the goal. A far cry from what I have now,   but it is the goal nonetheless. 
 
 [Run the code here](https://repl.it/@n113/My-Simple-Simjulation-v2)
 
@@ -25,7 +28,8 @@ Display:
   2. Display Counts of Species and Total Population Size
   3. Display Medians for All Species, inclduing weights for neural networks
 
-
+Extra:
+  1. Can save simulations and load them later
 
 
 ### To-Do
