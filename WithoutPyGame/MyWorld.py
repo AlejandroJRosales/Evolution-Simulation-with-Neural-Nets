@@ -31,9 +31,9 @@ to_fight = 0.8
 to_fight_species_war = 0.8
 to_fight_civil_war = 0.8
 pause = False
-pause_for_plot = True
-pause_for_auto_save = True
-save_plot = True
+pause_for_plot = False
+pause_for_auto_save = False
+save_plot = False
 
 if load_file:
     weights = [float(weight) for weight in file_in.pop(0).split(",")]
@@ -77,10 +77,8 @@ while True:
     population = mass_effect.war(population, prob_war, weights, to_fight, pause=pause)
     population = mass_effect.species_war(population, prob_species_war, weights, to_fight_species_war, pause=pause)
     population = mass_effect.civil_war(population, prob_civil_war, weights, to_fight_civil_war, pause=pause)
-
-    generation += 1
-
-    if auto_save and generation % save_every == 0:
+    
+    if auto_save and generation % save_every == 0 and generation != 0:
         def clean_text(text):
             return text.replace("(", "").replace(")", "").replace("'", "").replace("array", "").replace("[", "").replace("]", "")
 
@@ -95,3 +93,5 @@ while True:
         print("Done...")
         if pause_for_auto_save:
             input("\nPress ENTER to continue...")
+
+    generation += 1
