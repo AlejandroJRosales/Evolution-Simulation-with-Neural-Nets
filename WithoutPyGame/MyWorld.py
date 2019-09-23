@@ -37,7 +37,7 @@ save_plot = False
 
 if load_file:
     weights = [float(weight) for weight in file_in.pop(0).split(",")]
-    generation = int(file_in.pop(0))
+    generation = original_gen = int(file_in.pop(0))
     trait_list = ['Species', 'Height', 'Weight', 'Speed', 'Power', 'Neural Net W1', 'Neural Net W2']
     population = []
     creature = []
@@ -59,7 +59,7 @@ if load_file:
         count += 1
 else:
     weights = utils.create_weights()
-    generation = 0
+    generation = original_gen = 0
     population = ng.generate_population(pop_n)
 
 stats.weights_summary(weights, pause)
@@ -77,8 +77,8 @@ while True:
     population = mass_effect.war(population, prob_war, weights, to_fight, pause=pause)
     population = mass_effect.species_war(population, prob_species_war, weights, to_fight_species_war, pause=pause)
     population = mass_effect.civil_war(population, prob_civil_war, weights, to_fight_civil_war, pause=pause)
-    
-    if auto_save and generation % save_every == 0 and generation != 0:
+
+    if auto_save and generation % save_every == 0 and generation != 0 and generation != original_gen:
         def clean_text(text):
             return text.replace("(", "").replace(")", "").replace("'", "").replace("array", "").replace("[", "").replace("]", "")
 
