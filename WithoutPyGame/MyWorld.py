@@ -2,15 +2,17 @@
 CONVERT TO BLENDER OBJECTS - Change to "CATD" type dna or numbers or number representing "CATD"
 """
 
+import sys
 import numpy as np
 import NextGen as ng
 from NextGen import Stats, MassEffect, Utils
 
-pop_n = [3333, 3333, 3333]  # Number of: Charlens, Gritiss, Drackonians
+pop_n = [333, 333, 333]  # Number of: Charlens, Gritiss, Drackonians
 
-load_file = True
-auto_save = True
-save_every = 100
+load_file = False
+auto_save = False
+pause_for_auto_save = False
+save_every = 7
 file_in = open(input("File name to load previous simulation from: ") + ".txt", "r") if load_file else None
 if load_file:
     file_in = file_in.readlines()
@@ -19,7 +21,7 @@ file_out = input("File name to auto save as: ") + ".txt" if auto_save else None
 stats = Stats()
 mass_effect = MassEffect()
 utils = Utils()
-print_every = 10
+print_every = 5
 print_plots_every = 1500
 num_data_points = 5
 prob_illness = .0001
@@ -32,8 +34,8 @@ to_fight_species_war = 0.8
 to_fight_civil_war = 0.8
 pause = False
 pause_for_plot = False
-pause_for_auto_save = False
 save_plot = False
+on_win32 = sys.platform == "win32"
 
 if load_file:
     weights = [float(weight) for weight in file_in.pop(0).split(",")]
@@ -62,9 +64,17 @@ else:
     generation = original_gen = 0
     population = ng.generate_population(pop_n)
 
+py = 0
+cpu_usage_percent = 0
+if on_win32:
+    import os
+    import psutil
+    pid = os.getpid()
+    py = psutil.Process(pid)
+
 stats.weights_summary(weights, pause)
 while True:
-
+    print(f"CPU USAGE: {psutil.cpu_percent()}% GPU USAGE: {round(py.memory_info()[0] / 2. ** 30, 2)}GB") if on_win32 else None
     # for i in range(10000):
     utils.check_pulse(population)
     stats.counting(population, generation, print_every=print_every)
@@ -78,10 +88,9 @@ while True:
     population = mass_effect.species_war(population, prob_species_war, weights, to_fight_species_war, pause=pause)
     population = mass_effect.civil_war(population, prob_civil_war, weights, to_fight_civil_war, pause=pause)
 
-    if auto_save and generation % save_every == 0 and generation != 0 and generation != original_gen:
+    if auto_save and generation % save_every == 0 and generation != original_gen or (generation == 0 and auto_save):
         def clean_text(text):
             return text.replace("(", "").replace(")", "").replace("'", "").replace("array", "").replace("[", "").replace("]", "")
-
         print("\nAuto saving...")
         with open(file_out, 'w') as f:
             f.write(clean_text(str(weights)) + "\n")
