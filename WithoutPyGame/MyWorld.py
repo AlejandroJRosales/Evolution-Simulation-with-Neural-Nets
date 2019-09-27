@@ -7,10 +7,10 @@ import numpy as np
 import NextGen as ng
 from NextGen import Stats, MassEffect, Utils
 
-pop_n = [333, 333, 333]  # Number of: Charlens, Gritiss, Drackonians
+pop_n = [333333333, 333333333, 333333333]  # Number of: Charlens, Gritiss, Drackonians
 
 load_file = False
-auto_save = False
+auto_save = True
 pause_for_auto_save = False
 save_every = 7
 file_in = open(input("File name to load previous simulation from: ") + ".txt", "r") if load_file else None
@@ -65,7 +65,6 @@ else:
     population = ng.generate_population(pop_n)
 
 py = 0
-cpu_usage_percent = 0
 if on_win32:
     import os
     import psutil
@@ -74,8 +73,8 @@ if on_win32:
 
 stats.weights_summary(weights, pause)
 while True:
-    print(f"CPU USAGE: {psutil.cpu_percent()}% GPU USAGE: {round(py.memory_info()[0] / 2. ** 30, 2)}GB") if on_win32 else None
     # for i in range(10000):
+    utils.cpu_gpu_usage(py, generation, print_every=print_every)
     utils.check_pulse(population)
     stats.counting(population, generation, print_every=print_every)
     stats.creatures_summary(population, weights, generation, print_every=print_every)
