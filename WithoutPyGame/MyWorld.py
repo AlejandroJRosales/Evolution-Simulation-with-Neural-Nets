@@ -7,10 +7,10 @@ import numpy as np
 import NextGen as ng
 from NextGen import Stats, MassEffect, Utils
 
-pop_n = [333333333, 333333333, 333333333]  # Number of: Charlens, Gritiss, Drackonians
+pop_n = [333, 333, 333]  # Number of: Charlens, Gritiss, Drackonians
 
 load_file = False
-auto_save = True
+auto_save = False
 pause_for_auto_save = False
 save_every = 7
 file_in = open(input("File name to load previous simulation from: ") + ".txt", "r") if load_file else None
@@ -22,7 +22,7 @@ stats = Stats()
 mass_effect = MassEffect()
 utils = Utils()
 print_every = 5
-print_plots_every = 1500
+print_plots_every = 1000
 num_data_points = 5
 prob_illness = .0001
 prob_war = .0001
@@ -35,7 +35,7 @@ to_fight_civil_war = 0.8
 pause = False
 pause_for_plot = False
 save_plot = False
-on_win32 = sys.platform == "win32"
+on_pc = sys.platform != "iOS"
 
 if load_file:
     weights = [float(weight) for weight in file_in.pop(0).split(",")]
@@ -65,7 +65,7 @@ else:
     population = ng.generate_population(pop_n)
 
 py = 0
-if on_win32:
+if on_pc:
     import os
     import psutil
     pid = os.getpid()
@@ -74,7 +74,7 @@ if on_win32:
 stats.weights_summary(weights, pause)
 while True:
     # for i in range(10000):
-    utils.cpu_gpu_usage(py, generation, print_every=print_every)
+    utils.cpu_gpu_usage(on_pc, py, generation, print_every=print_every)
     utils.check_pulse(population)
     stats.counting(population, generation, print_every=print_every)
     stats.creatures_summary(population, weights, generation, print_every=print_every)
