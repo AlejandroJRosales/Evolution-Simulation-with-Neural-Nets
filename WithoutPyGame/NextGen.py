@@ -2,7 +2,7 @@ import sys
 import random
 import matplotlib.pyplot as plt
 import numpy as np
-if sys.platform == "win32":
+if sys.platform != "iOS":
     import psutil
 
 species = [
@@ -18,7 +18,7 @@ trait_list = [
     'Neural Net W1',
     'Neural Net W2'
 ]
-prob_crossover = 0.001
+prob_crossover = .005
 prob_mutation = 0.35
 mutation_rate = 0.001
 max_num_kids = 5
@@ -551,7 +551,7 @@ class Utils:
         return [charlen_median_traits, gritis_median_traits, drakonian_median_traits]
 
     def sigmoid(self, x):
-        return 1 / (1 + np.exp(-round(x, 15)))
+        return 1 / (1 + np.exp(-x))
 
     def dot(self, inp, weights):
         return [self.sigmoid(sum([num * weight for weight in weights])) for num in inp]
@@ -583,9 +583,9 @@ class Utils:
 
         return charlen_median_nn_stats, gritis_median_nn_stats, drakonian_median_nn_stats
 
-    def cpu_gpu_usage(self, py, generation, print_every=1):
-        if generation % print_every == 0:
-            print(f"CPU USAGE: {psutil.cpu_percent()}% GPU USAGE: {round(py.memory_info()[0] / 2. ** 30, 2)}GB", end="")
+    def cpu_gpu_usage(self, on_pc, py, generation, print_every=1):
+        if on_pc and generation % print_every == 0:
+            print(f"CPU USAGE: {psutil.cpu_percent()}% GPU USAGE: {round(py.memory_info()[0] / 2. ** 30, 3)}GB", end="")
 
 
 def generate_population(num_of_creatures):
@@ -793,8 +793,8 @@ def crossover(population):
                     p1_nn_weights2 = parent1[6][1]
                     p2_nn_weights1 = parent2[5][1]
                     p2_nn_weights2 = parent2[6][1]
-                    r1 = random.randint(0, len(p1_nn_weights1))
-                    r2 = random.randint(0, len(p1_nn_weights2))
+                    r1 = random.randint(0, len(p1_nn_weights1) - 1)
+                    r2 = random.randint(0, len(p1_nn_weights2) - 1)
                     parent1[5] = (parent1[5][0], np.concatenate((p1_nn_weights1[:r1], p2_nn_weights1[r1:]), axis=0))
                     parent1[6] = (parent1[6][0], np.concatenate((p1_nn_weights2[:r2], p2_nn_weights2[r2:]), axis=0))
                     parent2[5] = (parent2[5][0], np.concatenate((p2_nn_weights1[:r1], p1_nn_weights1[r1:]), axis=0))
