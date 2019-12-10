@@ -37,7 +37,7 @@ prob_mutation = .75
 mutation_rate = .001
 num_of_traits = len(trait_list)
 nn_weights1_len = len(nn_input)
-nn_weights2_len = 2
+nn_weights2_len = 3
 resource_reward_min, resource_reward_max = 20, 50
 resource_health_boost_min, resource_health_boost_max = 1, 3
 resource_fitness_boost_min, resource_fitness_boost_max = 1, 3
@@ -46,6 +46,7 @@ damage_multiplier = .9
 health_multiplier = .5
 resource_multiplier = .5
 age_health_multiplier = .1
+energy_retention = .9
 prob_change_fighters = 0.2
 charlen_maturity_age = 18
 gritis_maturity_age = 25
@@ -579,10 +580,10 @@ class Utils:
     def sigmoid(self, x):
         return 1 / (1 + np.exp(-x))
 
-    def softmax2(self, w, t=1.0):
-        e = np.exp(np.array(w) / t)
-        dist = e / np.sum(e)
-        return dist
+    def softmax(self, x):
+        e_x = np.exp(x - np.max(x))
+        out = e_x / e_x.sum()
+        return out
 
     def sigmoid_dot(self, inp, weights):
         return [self.sigmoid(sum([num * weight for num in inp])) for weight in weights]
@@ -694,6 +695,7 @@ def select_fittest(population, fitness_scores):
         del fitness_scores[drakonian_index]
 
     fighting_count = 0
+    eat_count = 0
     for count in range(len(population)):
         # it is ok if not every creature participates so do not worry about it
         creature_index = random.randint(0, len(population) - 1)
@@ -722,7 +724,7 @@ def select_fittest(population, fitness_scores):
 
         resource_reward = random.randint(resource_reward_min, resource_reward_max)
 
-        fight_categories = ["No", "Yes"]
+        fight_categories = ["Passivity", "Fight", "Eat"]
 
         # Think, i.e. applying their neural network
         utils = Utils()
@@ -735,7 +737,7 @@ def select_fittest(population, fitness_scores):
                                 competitor_resources], creature_nn_weights1)
         output = utils.sigmoid_dot(hidden_layer_output, creature_nn_weights2)
         # Index 1 is yes to fight, index 0 is no to fight
-        creature_wants_fight = fight_categories[output.index(max(output))]
+        creature_wants = fight_categories[output.index(max(output))]
 
         hidden_layer_output = utils.sigmoid_dot([competitor_fitness,
                                 creature_fitness,
@@ -746,11 +748,87 @@ def select_fittest(population, fitness_scores):
                                 creature_resources], competitor_nn_weights1)
         output = utils.sigmoid_dot(hidden_layer_output, competitor_nn_weights2)
         # Index 1 is yes to fight, index 0 is no to fight
-        competitor_wants_fight = fight_categories[output.index(max(output))]
+        competitor_wants = fight_categories[output.index(max(output))]
 
-        # print(creature_wants_fight, competitor_wants_fight)
+        # print(creature_wants, competitor_wants)
 
-        if creature_wants_fight == "Yes" and competitor_wants_fight == "Yes":
+        if creature_wants == "Eat" or competitor_wants == "Eat":
+            eat_count += 1
+            # Resources help give health a boost and fitness a boost as well
+            creature_health += creature_resources * (
+                        random.randint(resource_health_boost_min, resource_health_boost_max) * .01)
+            creature_fitness += creature_resources * (
+                        random.randint(resource_fitness_boost_min, resource_fitness_boost_max) * .01)
+            competitor_health += competitor_resources * (
+                        random.randint(resource_health_boost_min, resource_health_boost_max) * .01)
+            competitor_fitness += competitor_resources * (
+                        random.randint(resource_fitness_boost_min, resource_fitness_boost_max) * .01)
+
+            if creature_fitness > competitor_fitness:
+                # Since the competitor lost we remove health from the creature remove resources from them
+                competitor_lost_resources = competitor_resources
+                competitor_resources -= competitor_lost_resources
+
+                creature_health -= abs(competitor_fitness * .1)
+                creature_lost_resources = creature_resources * .1
+                creature_resources -= creature_lost_resources
+
+                # Now onto the original creature
+                # They get the boost of both resources they were fighting for and the resources of the competitor
+                # they vanquished to their resources
+                creature_health += (resource_reward + competitor_lost_resources) * energy_retention
+                creature[3] = ('Health', round(creature_health, 3))
+                creature_resources += (resource_reward + competitor_lost_resources) * energy_retention
+                creature[4] = ('Resources', round(creature_resources, 3))
+                population[creature_index] = creature
+
+                # Competitor eaten
+                del population[competitor_index]
+
+            elif creature_fitness < competitor_fitness:
+                # Since the original creature lost we remove health from the creature remove resources from them
+                creature_lost_resources = creature_resources
+                creature_resources -= creature_lost_resources
+
+                competitor_health -= abs(creature_fitness * .1)
+                competitor_lost_resources = competitor_resources * .1
+                competitor_resources -= competitor_lost_resources
+
+                # Now onto the original creature
+                # They get the boost of both resources they were fighting for and the resources of the competitor
+                # they vanquished to their resources
+                competitor_health += (resource_reward + creature_lost_resources) * energy_retention
+                competitor[3] = ('Health', round(competitor_health, 3))
+                competitor_resources += (resource_reward + creature_lost_resources) * energy_retention
+                competitor[4] = ('Resources', round(competitor_resources, 3))
+                population[competitor_index] = competitor
+
+                # Creature eaten
+                del population[creature_index]
+
+            else:
+                # If they tied then they both lose health and resources and both may die
+                creature_health -= abs(competitor_fitness * damage_multiplier)
+                creature_lost_resources = creature_resources * per_lost_resources
+                creature_resources -= creature_lost_resources
+                if creature_health <= 0:
+                    del population[creature_index]
+                else:
+                    creature[3] = ('Health', round(creature_health, 3))
+                    creature[4] = ('Resources', round(creature_resources, 3))
+                    population[creature_index] = creature
+
+                competitor_health -= abs(creature_fitness * damage_multiplier)
+                competitor_lost_resources = competitor_resources * per_lost_resources
+                competitor_resources -= competitor_lost_resources
+                if competitor_health <= 0:
+                    del population[competitor_index]
+                else:
+                    competitor[3] = ('Health', round(competitor_health, 3))
+                    competitor[4] = ('Resources', round(competitor_resources, 3))
+                    population[competitor_index] = competitor
+
+        elif creature_wants == "Fight" and competitor_wants == "Fight":
             fighting_count += 1
             # Resources help give health a boost and fitness a boost as well
             creature_health += creature_resources * (random.randint(resource_health_boost_min, resource_health_boost_max) * .01)
@@ -764,13 +842,14 @@ def select_fittest(population, fitness_scores):
                 competitor_lost_resources = competitor_resources * per_lost_resources
                 competitor_resources -= competitor_lost_resources
 
+                creature_health -= abs(competitor_fitness * .1)
+                creature_lost_resources = creature_resources * .1
+                creature_resources -= creature_lost_resources
+
                 # Now onto the original creature
                 # They get the boost of both resources they were fighting for and the resources of the competitor
                 # they vanquished to their resources
-                # print()
-                # print(creature_health)
                 creature_health += (resource_reward + competitor_lost_resources) * health_multiplier
-                # print(creature_health)
                 creature[3] = ('Health', round(creature_health, 3))
                 creature_resources += (resource_reward + competitor_lost_resources) * resource_multiplier
                 creature[4] = ('Resources', round(creature_resources, 3))
@@ -790,6 +869,10 @@ def select_fittest(population, fitness_scores):
                 creature_health -= abs(competitor_fitness * damage_multiplier)
                 creature_lost_resources = creature_resources * per_lost_resources
                 creature_resources -= creature_lost_resources
+
+                competitor_health -= abs(creature_fitness * .1)
+                competitor_lost_resources = competitor_resources * .1
+                competitor_resources -= competitor_lost_resources
 
                 # Now onto the original creature
                 # They get the boost of both resources they were fighting for and the resources of the competitor
@@ -839,7 +922,8 @@ def select_fittest(population, fitness_scores):
             competitor[4] = ('Resources', round((competitor_resources + (resource_reward * .5)) * resource_multiplier, 3))
             population[competitor_index] = competitor
 
-    print(f"Fights# ", fighting_count)  # *** <- I'm here to make this eaiser to find with ctrl-f
+    print(f"# Fights: ", fighting_count)  # *** <- I'm here to make this eaiser to find with ctrl-f
+    print(f"# Eat: ", eat_count)  # *** <- I'm here to make this eaiser to find with ctrl-f
 
     return population
 
