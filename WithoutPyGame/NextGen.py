@@ -37,7 +37,7 @@ prob_mutation = .75
 mutation_rate = .001
 num_of_traits = len(trait_list)
 nn_weights1_len = len(nn_input)
-nn_weights2_len = nn_weights1_len
+nn_weights2_len = 2
 resource_reward_min, resource_reward_max = 20, 50
 resource_health_boost_min, resource_health_boost_max = 1, 3
 resource_fitness_boost_min, resource_fitness_boost_max = 1, 3
@@ -437,7 +437,7 @@ class MassEffect:
 class Creatures:
     def generate_charlen(self, weights):
         charlen = [('Species', 'Charlen')]
-        charlen.append(('Age', 18))  # Age
+        charlen.append(('Age', charlen_maturity_age))  # Age
         charlen.append(('Gen.', 0))  # Generation
         charlen.append(('Resources', random.randint(10, 60)))  # Resources
         mu, sigma = 67, 3  # Height
@@ -448,7 +448,7 @@ class Creatures:
         charlen.append(('Speed', round(np.random.normal(mu, sigma), 3)))
         mu, sigma = 40, 15  # Power
         charlen.append(('Power', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = calc_fitness([charlen], weights)[0], 12  # Calculate fitness to calculate health
+        mu, sigma = calc_fitness([charlen], weights)[0], 20  # Calculate fitness to calculate health
         charlen.insert(3, ('Health', round(np.random.normal(mu, sigma), 3)))
         charlen.append(('Neural Net W1', np.round(2 * np.random.random(nn_weights1_len) - 1, 8)))  # Weights for Neural Network
         charlen.append(('Neural Net W2', np.round(2 * np.random.random(nn_weights2_len) - 1, 8)))  # Weights for Neural Network
@@ -457,7 +457,7 @@ class Creatures:
 
     def generate_gritis(self, weights):
         gritis = [('Species', 'Gritis')]
-        gritis.append(('Age', 25))  # Age
+        gritis.append(('Age', gritis_maturity_age))  # Age
         gritis.append(('Gen.', 0))  # Generation
         gritis.append(('Resources', random.randint(10, 60)))  # Resources
         mu, sigma = 96, 5  # Height
@@ -468,7 +468,7 @@ class Creatures:
         gritis.append(('Speed', round(np.random.normal(mu, sigma), 3)))
         mu, sigma = 20, 11  # Power
         gritis.append(('Power', round(np.random.normal(mu, sigma), 3)))
-        mu, sigma = calc_fitness([gritis], weights)[0], 8  # Calculate fitness to calculate health
+        mu, sigma = calc_fitness([gritis], weights)[0], 20  # Calculate fitness to calculate health
         gritis.insert(3, ('Health', round(np.random.normal(mu, sigma), 3)))
         gritis.append(('Neural Net W1', np.round(2 * np.random.random(nn_weights1_len) - 1, 8)))  # Weights for Neural Network
         gritis.append(('Neural Net W2', np.round(2 * np.random.random(nn_weights2_len) - 1, 8)))  # Weights for Neural Network
@@ -477,7 +477,7 @@ class Creatures:
 
     def generate_drakonian(self, weights):
         drakonian = [('Species', 'Drakonian')]
-        drakonian.append(('Age', 12))  # Age
+        drakonian.append(('Age', drakonian_maturity_age))  # Age
         drakonian.append(('Gen.', 0))  # Generation
         drakonian.append(('Resources', random.randint(10, 60)))  # Resources
         mu, sigma = 52, 5  # Height
@@ -579,8 +579,16 @@ class Utils:
     def sigmoid(self, x):
         return 1 / (1 + np.exp(-x))
 
-    def dot(self, inp, weights):
+    def softmax2(self, w, t=1.0):
+        e = np.exp(np.array(w) / t)
+        dist = e / np.sum(e)
+        return dist
+
+    def sigmoid_dot(self, inp, weights):
         return [self.sigmoid(sum([num * weight for num in inp])) for weight in weights]
+
+    def softmax_dot(self, inp, weights):
+        return [self.softmax(sum([num * weight for num in inp])) for weight in weights]
 
     def get_median_nn_stats(self, population):
         charlen_median_traits, gritis_median_traits, drakonian_median_traits = self.get_medians(population)
@@ -714,27 +722,35 @@ def select_fittest(population, fitness_scores):
 
         resource_reward = random.randint(resource_reward_min, resource_reward_max)
 
+        fight_categories = ["No", "Yes"]
+
         # Think, i.e. applying their neural network
         utils = Utils()
-        hidden_layer_output = utils.dot([creature_fitness,
+        hidden_layer_output = utils.sigmoid_dot([creature_fitness,
                                 competitor_fitness,
                                 creature_health,
                                 competitor_health,
                                 resource_reward,
                                 creature_resources,
                                 competitor_resources], creature_nn_weights1)
-        creature_want = utils.dot(hidden_layer_output, creature_nn_weights2)[0]
+        output = utils.sigmoid_dot(hidden_layer_output, creature_nn_weights2)
+        # Index 1 is yes to fight, index 0 is no to fight
+        creature_wants_fight = fight_categories[output.index(max(output))]
 
-        hidden_layer_output = utils.dot([competitor_fitness,
+        hidden_layer_output = utils.sigmoid_dot([competitor_fitness,
                                 creature_fitness,
                                 competitor_health,
                                 creature_health,
                                 resource_reward,
                                 competitor_resources,
                                 creature_resources], competitor_nn_weights1)
-        competitor_want = utils.dot(hidden_layer_output, competitor_nn_weights2)[0]
+        output = utils.sigmoid_dot(hidden_layer_output, competitor_nn_weights2)
+        # Index 1 is yes to fight, index 0 is no to fight
+        competitor_wants_fight = fight_categories[output.index(max(output))]
 
-        if creature_want >= .5 and competitor_want >= .5:
+        # print(creature_wants_fight, competitor_wants_fight)
+
+        if creature_wants_fight == "Yes" and competitor_wants_fight == "Yes":
             fighting_count += 1
             # Resources help give health a boost and fitness a boost as well
             creature_health += creature_resources * (random.randint(resource_health_boost_min, resource_health_boost_max) * .01)
@@ -823,7 +839,7 @@ def select_fittest(population, fitness_scores):
             competitor[4] = ('Resources', round((competitor_resources + (resource_reward * .5)) * resource_multiplier, 3))
             population[competitor_index] = competitor
 
-    # print(f"Fights# ", fighting_count)  # *** <- I'm here to make this eaiser to find with ctrl-f
+    print(f"Fights# ", fighting_count)  # *** <- I'm here to make this eaiser to find with ctrl-f
 
     return population
 
@@ -867,6 +883,10 @@ def crossover(population):
         same_species = specie_parent1 == specie_parent2
         # both_same_gen = parent1_gen == parent2_gen
 
+        # Store children in array so that when you edit the right parents because you first need to edit the parents
+        # before placing children in population because it will mess with indexes of creatures in population
+        children = []
+
         # Check if both parents are sexually mature and same species
         if same_species and both_sexually_mature:
             # Breed if parents pass probability of crossover and health is above 20
@@ -903,7 +923,7 @@ def crossover(population):
                 child[2] = ('Gen.', generation + 1)
                 child[3] = ('Health', parent_given_health)
                 child[4] = ('Resources', parent_given_resources)
-                population.insert(random.randint(0, len(population) - 1), child)
+                children.append(child)
 
             parent1[3] = ('Health', parent1_health)
             parent2[3] = ('Health', parent2_health)
@@ -911,6 +931,9 @@ def crossover(population):
             parent2[4] = ('Resources', parent2_resources)
             population[creature] = parent1
             population[to_breed_with] = parent2
+
+            # Now place children in
+            [population.insert(random.randint(0, len(population) - 1), child) for child in children]
 
     return population
 
