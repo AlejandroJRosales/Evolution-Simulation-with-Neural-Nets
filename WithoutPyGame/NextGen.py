@@ -32,6 +32,7 @@ nn_input = [
     "c2 resources"
 ]
 
+world_resources = 1000
 prob_crossover = .5
 prob_mutation = .75
 mutation_rate = .001
@@ -41,11 +42,10 @@ nn_weights2_len = 3
 resource_reward_min, resource_reward_max = 20, 50
 resource_health_boost_min, resource_health_boost_max = 1, 3
 resource_fitness_boost_min, resource_fitness_boost_max = 1, 3
-per_lost_resources = .7
+per_lost_resources = .8
 damage_multiplier = .9
 health_multiplier = .5
-resource_multiplier = .5
-age_health_multiplier = .1
+age_penalty_multiplier = .2
 energy_retention = .9
 prob_change_fighters = 0.2
 charlen_maturity_age = 18
@@ -655,6 +655,9 @@ def calc_fitness(population, weights):
 
 
 def select_fittest(population, fitness_scores):
+    # This is so the parameter can be controlled at the top
+    wrld_resources = world_resources
+
     charlens = []
     charlen_count = 0
     gritiss = []
@@ -722,7 +725,8 @@ def select_fittest(population, fitness_scores):
         competitor_nn_weights1 = competitor[len(competitor) - 2][1]
         competitor_nn_weights2 = competitor[len(competitor) - 1][1]
 
-        resource_reward = random.randint(resource_reward_min, resource_reward_max)
+        resource_reward = random.randint(resource_reward_min, resource_reward_max) if wrld_resources > 0 else 0
+        wrld_resources -= resource_reward
 
         fight_categories = ["Passivity", "Fight", "Eat"]
 
@@ -756,13 +760,13 @@ def select_fittest(population, fitness_scores):
             eat_count += 1
             # Resources help give health a boost and fitness a boost as well
             creature_health += creature_resources * (
-                        random.randint(resource_health_boost_min, resource_health_boost_max) * .01)
+                    random.randint(resource_health_boost_min, resource_health_boost_max) * .01)
             creature_fitness += creature_resources * (
-                        random.randint(resource_fitness_boost_min, resource_fitness_boost_max) * .01)
+                    random.randint(resource_fitness_boost_min, resource_fitness_boost_max) * .01)
             competitor_health += competitor_resources * (
-                        random.randint(resource_health_boost_min, resource_health_boost_max) * .01)
+                    random.randint(resource_health_boost_min, resource_health_boost_max) * .01)
             competitor_fitness += competitor_resources * (
-                        random.randint(resource_fitness_boost_min, resource_fitness_boost_max) * .01)
+                    random.randint(resource_fitness_boost_min, resource_fitness_boost_max) * .01)
 
             if creature_fitness > competitor_fitness:
                 # Since the competitor lost we remove health from the creature remove resources from them
@@ -831,10 +835,14 @@ def select_fittest(population, fitness_scores):
         elif creature_wants == "Fight" and competitor_wants == "Fight":
             fighting_count += 1
             # Resources help give health a boost and fitness a boost as well
-            creature_health += creature_resources * (random.randint(resource_health_boost_min, resource_health_boost_max) * .01)
-            creature_fitness += creature_resources * (random.randint(resource_fitness_boost_min, resource_fitness_boost_max) * .01)
-            competitor_health += competitor_resources * (random.randint(resource_health_boost_min, resource_health_boost_max) * .01)
-            competitor_fitness += competitor_resources * (random.randint(resource_fitness_boost_min, resource_fitness_boost_max) * .01)
+            creature_health += creature_resources * (
+                        random.randint(resource_health_boost_min, resource_health_boost_max) * .01)
+            creature_fitness += creature_resources * (
+                        random.randint(resource_fitness_boost_min, resource_fitness_boost_max) * .01)
+            competitor_health += competitor_resources * (
+                        random.randint(resource_health_boost_min, resource_health_boost_max) * .01)
+            competitor_fitness += competitor_resources * (
+                        random.randint(resource_fitness_boost_min, resource_fitness_boost_max) * .01)
 
             if creature_fitness > competitor_fitness:
                 # Since the competitor lost we remove health from the creature remove resources from them
@@ -851,7 +859,7 @@ def select_fittest(population, fitness_scores):
                 # they vanquished to their resources
                 creature_health += (resource_reward + competitor_lost_resources) * health_multiplier
                 creature[3] = ('Health', round(creature_health, 3))
-                creature_resources += (resource_reward + competitor_lost_resources) * resource_multiplier
+                creature_resources += (resource_reward + competitor_lost_resources)
                 creature[4] = ('Resources', round(creature_resources, 3))
                 population[creature_index] = creature
 
@@ -879,7 +887,7 @@ def select_fittest(population, fitness_scores):
                 # they vanquished to their resources
                 competitor_health += (resource_reward + creature_lost_resources) * health_multiplier
                 competitor[3] = ('Health', round(competitor_health, 3))
-                competitor_resources += (resource_reward + creature_lost_resources) * resource_multiplier
+                competitor_resources += (resource_reward + creature_lost_resources)
                 competitor[4] = ('Resources', round(competitor_resources, 3))
                 population[competitor_index] = competitor
 
@@ -916,10 +924,11 @@ def select_fittest(population, fitness_scores):
 
         else:
             creature[3] = ('Health', round(((creature_resources + (resource_reward * .5)) * health_multiplier), 3))
-            creature[4] = ('Resources', round((creature_resources + (resource_reward * .5)) * resource_multiplier, 3))
+            creature[4] = ('Resources', round((creature_resources + (resource_reward * .5)), 3))
             population[creature_index] = creature
             competitor[3] = ('Health', round((competitor_resources + (resource_reward * .5) * health_multiplier), 3))
-            competitor[4] = ('Resources', round((competitor_resources + (resource_reward * .5)) * resource_multiplier, 3))
+            competitor[4] = (
+            'Resources', round((competitor_resources + (resource_reward * .5)), 3))
             population[competitor_index] = competitor
 
     print(f"# Fights: ", fighting_count)  # *** <- I'm here to make this eaiser to find with ctrl-f
@@ -1056,7 +1065,7 @@ def update_age_health(population):
         current_age = population[creature][1][1]
         current_health = population[creature][3][1]
         updated_age = current_age + 1
-        updated_health = round(current_health - (updated_age * age_health_multiplier), 3)
+        updated_health = round(current_health - (updated_age * age_penalty_multiplier), 3)
         # check if health at or below 0
         if updated_health <= 0:
             del population[creature]
