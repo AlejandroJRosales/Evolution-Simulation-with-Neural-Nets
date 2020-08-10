@@ -68,11 +68,11 @@ Implemented:
 ***
 To-Do:
   1. 1 block 360 eyesight
-	2. select character move around
+  2. select character move around
   3. different species (some fast, some slower, some stronger, etc.)
-	4. food and prey
-	5. serial killer prey cant see them (red prey)
-	6. green plants that only oragne can eat
+  4. food and prey
+  5. serial killer prey cant see them (red prey)
+  6. green plants that only oragne can eat
   7. 0 energy decreses health slowly
 
 ### On a final note:
