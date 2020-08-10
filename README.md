@@ -63,7 +63,7 @@ Implemented:
   4. Bomb
   5. energy and can reproduce at a certain level
   6. year:day:hour
-  7. fix bug where food is adds to total causing the total to be more likely to equal total_num thus causing one creature to create multiple on its on
+  7. Food randomly generated at random times
 
 ***
 To-Do:
