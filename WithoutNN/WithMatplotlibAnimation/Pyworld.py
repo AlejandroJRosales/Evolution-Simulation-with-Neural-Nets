@@ -9,7 +9,8 @@ import matplotlib.animation as animation
 # setting up the values for the grid
 ON = 255
 OFF = 0
-FOOD_ON = 125
+DIRT = 54
+FOOD_ON = 24
 vals = [ON, OFF]
 population = dict()
 food_pot = dict()
@@ -38,8 +39,8 @@ hour = 0
 hours_per_day = 24
 days_per_year = 356
 # set grid size
-x = 100
-y = 150
+x = 150
+y = 175
 ix = -1
 iy = -1
 
@@ -97,11 +98,11 @@ class UserAction:
                         pos = (iy + col, ix + row)
                         if pos in population:
                             del population[pos]
-                            new_grid[pos] = OFF
+                            new_grid[pos] = DIRT
                             death_count += 1
                         if pos in food_pot:
                             del food_pot[pos]
-                            new_grid[pos] = OFF
+                            new_grid[pos] = DIRT
 
             if mass_food_on:
                 for row in range(-4, 5):
@@ -133,7 +134,7 @@ class UserAction:
             for pos in keys:
                 if random.random() <= 0.5:
                     del population[pos]
-                    new_grid[pos] = OFF
+                    new_grid[pos] = DIRT
                     death_count += 1
 
             thanos_on = False
@@ -335,7 +336,7 @@ class CreatureAction:
                 # remove daily energy
                 original_creature[1] -= original_creature[1] * daily_energy_perc_loss
                 final_alive_creature = original_creature
-                new_grid[key] = OFF
+                new_grid[key] = DIRT
 
             # take the final alive creature and check if its energy is at or below 0, if so, kill it
             final_alive_creature_energy = final_alive_creature[1]
