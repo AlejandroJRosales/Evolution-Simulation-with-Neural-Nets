@@ -52,6 +52,7 @@ To-Do:
 
 ### With Matplotlib Animation and Without Neural Network:
 Basically, the creatures as displayed on a grid using matplotlib animation function. The creatures are yellow, and the empty spots are purple. The creatures, currently, move around randomly. That being said, I would like to add eyesight to them so that they can see food and go to it, or even chase prey. Adding a neural network, even a small one, might be too computationally expensive, but we'll see. The creatures have fitness and energy. The energy levels deplete as each hour passes. If the energy goes below 0, then the creature dies. A creature needs energy level proportionally higher to their fitness to procreate. This proporiton can be edited. Next, if a creature, a child or not, runs into, another creature, then each creatures fitness will decide who lives and who dies. 
+In addition, there are different species. Drakonians and Gritiss. Drakonians are faster, but they use more energy while they move. Gritiss are slower, but they use less energy when they move.
 There are also things the user can do to interact with the creatures. The user can press pause to pause the simulation. This is to drop single pieces of food on the grid for a creature to eat. Or the user can drop mass amounts of food on the grid. Each piece of food is randomly set to a number. This number, when the piece of food is eaten, increases their fitness and energy of the creature that ate the food by the amount the food number was set to. In addition, the user can set off an explosion that blows up a ceratain area of the grid. The user can also press "t" to activate the thanos feature. The thanos feature, as guessed, kills about 50% of all the creatures on the grid.
 For the strings displayed on the plot, year:days:hours are displayed. So is the number of creatures alive, and how many have died. In addition, the max fitness and energy is displayed. Note, not neccesarily of the same creature.
 
@@ -64,12 +65,13 @@ Implemented:
   5. energy and can reproduce at a certain level
   6. year:day:hour
   7. Food randomly generated at random times
+  8. different species 
 
 ***
 To-Do:
   1. 1 block 360 eyesight
   2. select character move around
-  3. different species (some fast, some slower, some stronger, etc.)
+  3. different species (some fast, some slower, some stronger, etc.) (started)
   4. food and prey
   5. serial killer prey cant see them (red prey)
   6. green plants that only oragne can eat
