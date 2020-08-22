@@ -1,5 +1,5 @@
 """
-CONVERT TO BLENDER OBJECTS - Change to "CATD" type dna or numbers or number representing "CATD"
+Change to "CATD" type dna or numbers or number representing "CATD"
 """
 
 import sys
