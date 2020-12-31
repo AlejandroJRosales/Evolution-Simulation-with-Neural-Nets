@@ -1,7 +1,9 @@
 import sys
 import random
 import matplotlib.pyplot as plt
+from math import cos, sin, atan
 import numpy as np
+
 if sys.platform != "ios":
     import psutil
 
@@ -31,8 +33,8 @@ nn_input = [
     "c2 resources"
 ]
 
-world_resources = 10000000
-prob_crossover = .5
+world_resources = 1000000
+prob_crossover = .65
 prob_mutation = .75
 prob_neuronal_mutation = .75
 mutation_rate = .001
@@ -52,9 +54,18 @@ gritis_maturity_age = 25
 drakonian_maturity_age = 13
 perc_parent_health_lost = .5
 perc_parent_resources_lost = .3
+weight_display_size_multiplier = 2
+vertical_distance_between_layers = 6
+horizontal_distance_between_neurons = 2
+neuron_radius = 0.5
+number_of_neurons_in_widest_layer = 7
 
 
 class Stats:
+    def __init__(self):
+        self.utils = Utils()
+        self.network = NeuralNetworkDraw()
+
     def weights_summary(self, weights, pause=True):
         print(f"Environmental Factors: ", end="")
         for i in range(len(weights)):
@@ -65,10 +76,9 @@ class Stats:
         if pause:
             input("\nPress ENTER to continue...\n")
 
-    def creatures_summary(self, population, weights, generation=0, print_every=1):
-        if generation % print_every == 0:
-            utils = Utils()
-            charlen_median_traits, gritis_median_traits, drakonian_median_traits = utils.get_medians(population)
+    def creatures_summary(self, population, weights, generation=0, print_every=1, pause=False):
+        if generation % print_every == 0 or generation == 0:
+            charlen_median_traits, gritis_median_traits, drakonian_median_traits = self.utils.get_medians(population)
 
             fitness1 = 0
             for index in range(len(weights)):
@@ -113,34 +123,34 @@ class Stats:
             max_trait_name_len = len(max(updated_trait_list, key=len))
 
             # Print out medians traits for all species
-            # print(" " * (8 + max_trait_str_len) + "Medians")
-            # for trait in range(len(updated_trait_list)):
-            #     if trait != 0:
-            #         print()
-            #     print(updated_trait_list[trait] + " " * (max_trait_name_len - len(updated_trait_list[trait])), end=" ")
-            #     for creature in final:
-            #         if updated_trait_list[trait] == "Species":
-            #             print(creature[trait], end=" " * (max_trait_str_len - len(creature[trait])))
-            #         elif updated_trait_list[trait] == "Fitness":
-            #             if np.isnan(creature[trait]):
-            #                 print("Extinct", end=" " * (max_trait_str_len - len(str("Extinct"))))
-            #             else:
-            #                 rounded_score = round(creature[trait], 2)
-            #                 print(rounded_score, end=" " * (max_trait_str_len - len(str(rounded_score))))
-            #         elif np.isnan(creature[trait]):
-            #             if updated_trait_list[trait] == "Feet":
-            #                 print("Nan", end=" " * (max_trait_str_len - len(str("Nan"))))
-            #             else:
-            #                 print("Nan", end=" " * (max_trait_str_len - len(str("Nan"))))
-            #         else:
-            #             if updated_trait_list[trait] == "Feet":
-            #                 feet = int(creature[trait] / 12)
-            #                 inches = int(creature[trait]) % 12
-            #                 height = f"{feet}'{inches}\""
-            #                 print(height, end=" " * (max_trait_str_len - len(str(height))))
-            #             else:
-            #                 trait_rounded = round(creature[trait], 2)
-            #                 print(trait_rounded, end=" " * (max_trait_str_len - len(str(trait_rounded))))
+            print(" " * (8 + max_trait_str_len) + "Mean")
+            for trait in range(len(updated_trait_list)):
+                if trait != 0:
+                    print()
+                print(updated_trait_list[trait] + " " * (max_trait_name_len - len(updated_trait_list[trait])), end=" ")
+                for creature in final:
+                    if updated_trait_list[trait] == "Species":
+                        print(creature[trait], end=" " * (max_trait_str_len - len(creature[trait])))
+                    elif updated_trait_list[trait] == "Fitness":
+                        if np.isnan(creature[trait]):
+                            print("Extinct", end=" " * (max_trait_str_len - len(str("Extinct"))))
+                        else:
+                            rounded_score = round(creature[trait], 2)
+                            print(rounded_score, end=" " * (max_trait_str_len - len(str(rounded_score))))
+                    elif np.isnan(creature[trait]):
+                        if updated_trait_list[trait] == "Feet":
+                            print("Nan", end=" " * (max_trait_str_len - len(str("Nan"))))
+                        else:
+                            print("Nan", end=" " * (max_trait_str_len - len(str("Nan"))))
+                    else:
+                        if updated_trait_list[trait] == "Feet":
+                            feet = int(creature[trait] / 12)
+                            inches = int(creature[trait]) % 12
+                            height = f"{feet}'{inches}\""
+                            print(height, end=" " * (max_trait_str_len - len(str(height))))
+                        else:
+                            trait_rounded = round(creature[trait], 2)
+                            print(trait_rounded, end=" " * (max_trait_str_len - len(str(trait_rounded))))
 
             # Use spaces because of difference in use from pycharm to pythonista IDEs
             print("\n\n", " " * 9, "Neural Network Means")
@@ -163,6 +173,9 @@ class Stats:
                 print()
             print()
 
+            if pause:
+                input("\nPress ENTER to continue...\n")
+
     def counting(self, population, generation, print_every=1):
         if generation % print_every == 0:
             print()
@@ -182,26 +195,209 @@ class Stats:
                 f"\tDrakonian {drakonian_count}")
             print(f"\t{len(population):,} total creatures")
 
-    def show_nn_bar_graph(self, nn_medians, generation, save_plot=True, print_plots_every=500, pause_for_plot=True):
-        if generation % print_plots_every == 0 and generation != 0:
+    def display_brains(self, nn_medians, generation, save_plot=True, print_plots_every=500, pause_for_plot=True):
+        if generation % print_plots_every == 0:
+            print("Order of Brains: ")
             fig, ax = plt.subplots()
-            y = np.arange(len(nn_input)) * 4
-            charlen_weights = nn_medians[0]
-            gritis_medians = nn_medians[1]
-            drakonian_medians = nn_medians[2]
-            ax.barh(y - 1, charlen_weights, align='center', color='black', label="Charlen")
-            ax.barh(y, gritis_medians, align='center', color='red', label="Gritis")
-            ax.barh(y + 1, drakonian_medians, align='center', color='blue', label="Drakonian")
-            ax.set_yticks(y)
-            ax.set_yticklabels(nn_input)
-            ax.invert_yaxis()
-            plt.legend(loc='best')
-            plt.tight_layout()
+            self.network.set_fig(fig)
+            for species_index, weights in enumerate(nn_medians):
+                # fig, ax = plt.subplots(species_index)
+                # self.network.set_fig(fig)
+                print(species[species_index])
+                self.network.add_layer(1)
+                self.network.add_layer(nn_weights1_len, weights=weights)
+                self.network.draw()
             plt.show()
-            if save_plot:
-                plt.savefig('median_nn_weights.png')
-            if pause_for_plot:
-                input("\nPress ENTER to continue...\n")
+            plt.clf()
+
+
+class NeuronDraw:
+    def __init__(self, fig, x, y):
+        self.fig = fig
+        self.x = x
+        self.y = y
+
+    def draw(self):
+        circle = plt.Circle((self.x, self.y), radius=neuron_radius, fill=False)
+        self.fig.gca().add_patch(circle)
+
+
+class LayerDraw:
+    def __init__(self, fig, network, number_of_neurons):
+        self.fig = fig
+        self.previous_layer = self.__get_previous_layer(network)
+        self.y = self.__calculate_layer_y_position()
+        self.neurons = self.__intialise_neurons(number_of_neurons)
+
+    def __intialise_neurons(self, number_of_neurons):
+        neurons = []
+        x = self.__calculate_left_margin_so_layer_is_centered(number_of_neurons)
+        for iteration in range(number_of_neurons):
+            neuron = NeuronDraw(self.fig, x, self.y)
+            neurons.append(neuron)
+            x += horizontal_distance_between_neurons
+        return neurons
+
+    def __calculate_left_margin_so_layer_is_centered(self, number_of_neurons):
+        return horizontal_distance_between_neurons * (number_of_neurons_in_widest_layer - number_of_neurons) / 2
+
+    def __calculate_layer_y_position(self):
+        if self.previous_layer:
+            return self.previous_layer.y + vertical_distance_between_layers
+        else:
+            return 0
+
+    def __get_previous_layer(self, network):
+        if len(network.layers) > 0:
+            return network.layers[-1]
+        else:
+            return None
+
+    def __line_between_two_neurons(self, neuron1, neuron2, weight):
+        angle = atan((neuron2.x - neuron1.x) / float(neuron2.y - neuron1.y))
+        x_adjustment = neuron_radius * sin(angle)
+        y_adjustment = neuron_radius * cos(angle)
+        color = "blue" if weight > 0 else "red"
+        linewidth = weight * weight_display_size_multiplier
+        line = plt.Line2D((neuron1.x - x_adjustment, neuron2.x + x_adjustment), (neuron1.y - y_adjustment, neuron2.y + y_adjustment), color=color, linewidth=linewidth)
+        self.fig.gca().add_line(line)
+
+    def draw(self, weights):
+        for neuron, weight in zip(self.neurons, weights):
+            neuron.draw()
+            if self.previous_layer:
+                for previous_layer_neuron in self.previous_layer.neurons:
+                    self.__line_between_two_neurons(neuron, previous_layer_neuron, weight)
+
+
+class NeuralNetworkDraw:
+    def __init__(self):
+        self.fig = None
+        self.weights = []
+        self.layers = []
+
+    def set_fig(self, fig):
+        self.fig = fig
+
+    def add_layer(self, number_of_neurons, weights=[]):
+        layer = LayerDraw(self.fig, self, number_of_neurons)
+        self.layers.append(layer)
+        self.weights.append(weights)
+
+    def draw(self):
+        plt.clf()
+        for layer, weights in zip(self.layers, self.weights):
+            layer.draw(weights)
+        plt.axis('scaled')
+
+
+class Utils:
+    @staticmethod
+    def create_weights():
+        return [random.random() * .5 for i in range(4)]
+
+    @staticmethod
+    def check_pulse(population):
+        if len(population) <= 1:
+            print("\n\nAll Species Extinct... This is what \nhappens when you play god")
+            print("\n" + "=" * 42)
+            sys.exit()
+
+    @staticmethod
+    def count_creatures(population):
+        charlen_count = 0
+        gritis_count = 0
+        drakonian_count = 0
+        for creature in population:
+            try:
+                if creature[0][1] == species[0]:
+                    charlen_count += 1
+                elif creature[0][1] == species[1]:
+                    gritis_count += 1
+                else:
+                    drakonian_count += 1
+            except:
+                pass
+
+        return charlen_count, gritis_count, drakonian_count
+
+    @staticmethod
+    def get_middle(input_list):
+        if any(isinstance(i, np.ndarray) for i in input_list):
+            # print(input_list)
+            # print(np.transpose(input_list).mean(axis=1))
+            # assert False
+            return np.transpose(input_list).mean(axis=1)
+        return np.mean(input_list)
+
+    def get_medians(self, population):
+        # Separate creatures by species
+        charlens = []
+        gritiss = []
+        drakonians = []
+        for creature in population:
+            if creature[0][1] == species[0]:
+                charlens.append(creature)
+            elif creature[0][1] == species[1]:
+                gritiss.append(creature)
+            else:
+                drakonians.append(creature)
+
+        # Calculate medians for all traits and do it separately to account for different size arrays
+        charlen_median_traits = []
+        for i in range(1, len(trait_list) + 1):
+            trait = []
+            for charlen in charlens:
+                trait.append(charlen[i][1])
+            charlen_median_traits.append(self.get_middle(trait))
+
+        gritis_median_traits = []
+        for i in range(1, len(trait_list) + 1):
+            trait = []
+            for gritis in gritiss:
+                trait.append(gritis[i][1])
+            gritis_median_traits.append(self.get_middle(trait))
+
+        drakonian_median_traits = []
+        for i in range(1, len(trait_list) + 1):
+            trait = []
+            for drakonian in drakonians:
+                trait.append(drakonian[i][1])
+            drakonian_median_traits.append(self.get_middle(trait))
+
+        return [charlen_median_traits, gritis_median_traits, drakonian_median_traits]
+
+    def get_median_nn_stats(self, population):
+        charlen_median_traits, gritis_median_traits, drakonian_median_traits = self.get_medians(population)
+
+        # Combine species into on array
+        final = [["Charlen"] + charlen_median_traits]
+        final.append(["Gritis"] + gritis_median_traits)
+        final.append(["Drakonian"] + drakonian_median_traits)
+
+        charlen_median_nn_stats = []
+        gritis_median_nn_stats = []
+        drakonian_median_nn_stats = []
+        for col in range(nn_weights1_len):
+            for row in range(len(species)):
+                try:
+                    # Change - 2 when adding more traits for some reason
+                    weight = round(float(final[row][-1][col]), 4)
+                except:
+                    weight = np.nan
+                if row == 0:
+                    charlen_median_nn_stats.append(weight)
+                if row == 1:
+                    gritis_median_nn_stats.append(weight)
+                if row == 2:
+                    drakonian_median_nn_stats.append(weight)
+
+        return charlen_median_nn_stats, gritis_median_nn_stats, drakonian_median_nn_stats
+
+    @staticmethod
+    def cpu_ram_usage(on_pc, py, year, print_every=1):
+        if on_pc and year % print_every == 0:
+            print(f"CPU USAGE: {psutil.cpu_percent()}% RAM USAGE: {round(py.memory_info()[0] / 2. ** 30, 3)}GB", end="")
 
 
 class MassEffect:
@@ -489,84 +685,7 @@ class Creatures:
         return drakonian
 
 
-class Utils:
-    @staticmethod
-    def create_weights():
-        return [random.random() * .5 for i in range(4)]
-
-    @staticmethod
-    def check_pulse(population):
-        if len(population) <= 1:
-            print("\n\nAll Species Extinct... This is what \nhappens when you play god")
-            print("\n" + "=" * 42)
-            sys.exit()
-
-    @staticmethod
-    def count_creatures(population):
-        charlen_count = 0
-        gritis_count = 0
-        drakonian_count = 0
-        for creature in population:
-            try:
-                if creature[0][1] == species[0]:
-                    charlen_count += 1
-                elif creature[0][1] == species[1]:
-                    gritis_count += 1
-                else:
-                    drakonian_count += 1
-            except:
-                pass
-
-        return charlen_count, gritis_count, drakonian_count
-
-    @staticmethod
-    def get_middle(input_list):
-        if any(isinstance(i, np.ndarray) for i in input_list):
-            # print(input_list)
-            # print(np.transpose(input_list).mean(axis=1))
-            # assert False
-            return np.transpose(input_list).mean(axis=1)
-        return np.mean(input_list)
-
-    def get_medians(self, population):
-        # Separate creatures by species
-        charlens = []
-        gritiss = []
-        drakonians = []
-        for creature in population:
-            if creature[0][1] == species[0]:
-                charlens.append(creature)
-            elif creature[0][1] == species[1]:
-                gritiss.append(creature)
-            else:
-                drakonians.append(creature)
-
-        # Calculate medians for all traits and do it separately to account for different size arrays
-        charlen_median_traits = []
-        for i in range(1, len(trait_list) + 1):
-            trait = []
-            for charlen in charlens:
-                trait.append(charlen[i][1])
-            charlen_median_traits.append(self.get_middle(trait))
-        # print(charlen_median_traits)
-        # assert False
-
-        gritis_median_traits = []
-        for i in range(1, len(trait_list) + 1):
-            trait = []
-            for gritiss in drakonians:
-                trait.append(gritiss[i][1])
-            gritis_median_traits.append(self.get_middle(trait))
-
-        drakonian_median_traits = []
-        for i in range(1, len(trait_list) + 1):
-            trait = []
-            for drakonian in drakonians:
-                trait.append(drakonian[i][1])
-            drakonian_median_traits.append(self.get_middle(trait))
-
-        return [charlen_median_traits, gritis_median_traits, drakonian_median_traits]
-
+class NeuralNetwork:
     def sigmoid(self, x):
         return 1 / (1 + np.exp(-x))
 
@@ -583,39 +702,6 @@ class Utils:
 
     def feed_forward(self, inp, weights):
         return self.sigmoid(np.dot(inp, weights))
-
-    def get_median_nn_stats(self, population):
-        charlen_median_traits, gritis_median_traits, drakonian_median_traits = self.get_medians(population)
-
-        # Combine species into on array
-        final = [["Charlen"] + charlen_median_traits]
-        final.append(["Gritis"] + gritis_median_traits)
-        final.append(["Drakonian"] + drakonian_median_traits)
-
-        charlen_median_nn_stats = []
-        gritis_median_nn_stats = []
-        drakonian_median_nn_stats = []
-        # Use spaces because of difference in use from pycharm to pythonista
-        for col in range(nn_weights1_len):
-            for row in range(len(species)):
-                try:
-                    # Change - 2 when adding more traits for some reason
-                    weight = round(float(final[row][len(final[row]) - 2][col]), 4)
-                except:
-                    weight = np.nan
-                if row == 0:
-                    charlen_median_nn_stats.append(weight)
-                if row == 1:
-                    gritis_median_nn_stats.append(weight)
-                if row == 2:
-                    drakonian_median_nn_stats.append(weight)
-
-        return charlen_median_nn_stats, gritis_median_nn_stats, drakonian_median_nn_stats
-
-    @staticmethod
-    def cpu_ram_usage(on_pc, py, year, print_every=1):
-        if on_pc and year % print_every == 0:
-            print(f"CPU USAGE: {psutil.cpu_percent()}% RAM USAGE: {round(py.memory_info()[0] / 2. ** 30, 3)}GB", end="")
 
 
 def generate_population(num_of_creatures, weights):
@@ -647,6 +733,9 @@ def calc_fitness(population, weights):
 
 def select_fittest(population, fitness_scores):
     global world_resources
+
+    utils = Utils()
+    nn = NeuralNetwork()
 
     # This is so the parameter can be controlled at the top
     charlens = []
@@ -725,8 +814,7 @@ def select_fittest(population, fitness_scores):
         fight_categories = ["Passivity", "Fight"]
 
         # Think, i.e. applying their neural network
-        utils = Utils()
-        output = utils.feed_forward([creature_fitness,
+        output = nn.feed_forward([creature_fitness,
                                 competitor_fitness,
                                 creature_health,
                                 competitor_health,
@@ -743,7 +831,7 @@ def select_fittest(population, fitness_scores):
         else:
             creature_wants = "Passivity"
 
-        output = utils.feed_forward([competitor_fitness,
+        output = nn.feed_forward([competitor_fitness,
                                 creature_fitness,
                                 competitor_health,
                                 creature_health,
@@ -859,8 +947,7 @@ def select_fittest(population, fitness_scores):
             competitor[4] = ('Resources', round((competitor_resources + (resource_reward * .5)), 3))
             population[competitor_index] = competitor
 
-
-
+    print("Programmer Prints:")
     print(f"WR: {world_resources}")
     print(total_output / size)
     print(f"# Fights: ", fighting_count)  # *** <- I'm here to make this eaiser to find with ctrl-f
@@ -950,6 +1037,10 @@ def crossover(population):
                 child[2] = ('Gen.', generation + 1)
                 child[3] = ('Health', parent_given_health)
                 child[4] = ('Resources', parent_given_resources)
+
+                # mutate child
+                child = mutate(child)
+
                 children.append(child)
 
             parent1[3] = ('Health', new_parent1_health)
@@ -965,33 +1056,29 @@ def crossover(population):
     return population
 
 
-def mutation(population):
-    # loop through each creature
-    for count in range(len(population) - 1):
-        creature = population[count]
-        # loop through each gene in the creature
-        for index in range(5, len(creature) - 2):
-            if random.random() <= prob_mutation:
-                trait = old_trait = creature[index][1]
-                if random.random() <= .5:
-                    trait = round(trait + (trait * mutation_rate), 3)
-                else:
-                    trait = round(trait - (trait * mutation_rate), 3)
-                creature[index] = (creature[index][0], trait) if trait > 1 else (creature[index][0], old_trait)
-        # do the probability of neuronal mutation else if it were in the loop the probability of the neurons being
-        # mutated would be lower than the standard mutation, which doesnt happen in real life I dont think
-        nn = creature[-1][1]
-        for weight in range(nn_weights1_len):
-            # usually prob_mutation will be the same as prob_neuronal_mutation, but just in case we want to have
-            # more say of their brains mutating
-            if random.random() <= prob_neuronal_mutation:
-                # this range for mutation was the optimal range for change for a neuron that was found during research
-                nn[weight] = round(nn[weight] * random.uniform(.5, 1.5), 8)
-        # insert tuple with name and new neuron
-        creature[-1] = (creature[-1][0], nn)
-        population[count] = creature
+def mutate(creature):
+    # loop through each gene in the creature
+    for index in range(5, len(creature) - 2):
+        if random.random() <= prob_mutation:
+            trait = old_trait = creature[index][1]
+            if random.random() <= .5:
+                trait = round(trait + (trait * mutation_rate), 3)
+            else:
+                trait = round(trait - (trait * mutation_rate), 3)
+            creature[index] = (creature[index][0], trait) if trait > 1 else (creature[index][0], old_trait)
+    # do the probability of neuronal mutation else if it were in the loop the probability of the neurons being
+    # mutated would be lower than the standard mutation, which doesnt happen in real life I dont think
+    nn = creature[-1][1]
+    for weight in range(nn_weights1_len):
+        # usually prob_mutation will be the same as prob_neuronal_mutation, but just in case we want to have
+        # more say of their brains mutating
+        if random.random() <= prob_neuronal_mutation:
+            # this range for mutation was the optimal range for change for a neuron that was found during research
+            nn[weight] = round(nn[weight] * random.uniform(.5, 1.5), 8)
+    # insert tuple with name and new neuron
+    creature[-1] = (creature[-1][0], nn)
 
-    return population
+    return creature
 
 
 def update_age_health(population):
@@ -1024,7 +1111,7 @@ def update_age_health(population):
 
 
 def breed(population):
-    return mutation(crossover(population))
+    return crossover(population)
 
 
 def evolve(population, weights):
