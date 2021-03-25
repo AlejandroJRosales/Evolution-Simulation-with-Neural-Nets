@@ -7,6 +7,7 @@ import matplotlib.animation as animation
 
 # import multiprocessing
 # import threading
+
 """
 Ideas:
 - add line of sight, 320 for prey like 120 for predator, then the creature can chase the prey using a search algorithm,
@@ -35,12 +36,12 @@ These are like nobs that you can turn and tweak to effect how the simulation run
 """
 
 # World Parameters
-x = 100
-y = 100
-initial_world_resources = "100,000"
+x = 300
+y = 300
+initial_world_resources = "1,000,000"
 initial_world_resources = int(initial_world_resources.replace(",", ""))
 world_resources = initial_world_resources
-initial_resources_generated = .99
+initial_resources_generated = 1
 # Population Parameters
 gritis_p = 0.01
 drakonian_p = 0.01
@@ -75,11 +76,16 @@ creature_placement_deviation = 15
 mass_min_food_nutrients = 100
 mass_max_food_nutrients = 200
 # Color Parameters
-DRAKONIAN_ON = 60
+DRAKONIAN_ON = 20
 GRITIS_ON = 255
-FOOD_ON = 220
+FOOD_ON = 120
 FIGHT_ON = 20
-OFF = 120
+OFF = 200
+# DRAKONIAN_ON = 60
+# GRITIS_ON = 255
+# FOOD_ON = 220
+# FIGHT_ON = 20
+# OFF = 120
 
 """
 Setters
@@ -99,9 +105,9 @@ can_eat_veg_list = ["Gritis"]
 species_color_dict = {"Gritis": GRITIS_ON, "Drakonian": DRAKONIAN_ON}
 color_species_dict = {GRITIS_ON: "Gritis", DRAKONIAN_ON: "Drakonian"}
 new_grid = np.array([])
-death_count = 0
 max_energy = 0
 max_age = 0
+death_count = 0
 # Drakonian Setters
 drakonian_pop_size = 0
 max_darkonian_age = 0
@@ -143,10 +149,6 @@ indiv_age = 0
 
 
 class UserActions:
-    def __init__(self):
-        self.creature_actions = CreatureActions()
-        self.generate = Generate()
-
     @staticmethod
     def onclick(event):
         global food_pot
@@ -208,12 +210,11 @@ class UserActions:
         elif str(event.key) == "q":
             sys.exit()
 
-    def update_user_actions(self):
+    def update(self):
         global mouse_side
         global thanos_on
         global food_pot
         global ix, iy
-        global death_count
 
         if thanos_on:
             keys = []
@@ -223,7 +224,6 @@ class UserActions:
             for pos in range(0, len(keys), 2):
                 del population[keys[pos]]
                 new_grid[keys[pos]] = OFF
-                death_count += 1
 
             thanos_on = False
 
@@ -235,7 +235,6 @@ class UserActions:
                         if pos in population:
                             del population[pos]
                             new_grid[pos] = OFF
-                            death_count += 1
                         if pos in food_pot:
                             del food_pot[pos]
                             new_grid[pos] = OFF
@@ -376,8 +375,6 @@ class CreatureActions:
     def __init__(self):
         self.generate = Generate()
 
-
-
     @staticmethod
     def creature_consume_food():
         global new_grid
@@ -423,7 +420,7 @@ class CreatureActions:
                         new_grid[creature_loc] = GRITIS_ON
 
     @staticmethod
-    def reproduce(grid, keys, death_count):
+    def reproduce(grid, keys):
         for key in keys:
             creature = population[key]
 
@@ -539,13 +536,10 @@ class CreatureActions:
                             population[new_id] = child
                         # else, if other fitness is greater than child fitness than do nothing as other stays there and
                         # child dies, hence not added to board but is added to death count
-                        death_count += 1
                     else:
                         # if there is not another creature there add the child to the population and to the new grid
                         population[new_id] = child
                         new_grid[new_id] = ON
-
-        return death_count
 
     # def move_all_creatures(self, keys, hour):
     #     print(population)
@@ -588,8 +582,6 @@ class CreatureActions:
     @staticmethod
     # def creature_movement(keys, hour):
     def move_all_creatures(ids, hour):
-        global death_count
-
         for id in ids:
             original_creature = population[id]
 
@@ -659,8 +651,6 @@ class CreatureActions:
                         population[new_id] = predator
                         # set the new spot to the color of the predator
                         new_grid[new_id] = species_color_dict[predator["species"]]
-                        # add to the death count
-                        death_count += 1
                     else:
                         population[new_id] = prey
 
@@ -707,13 +697,7 @@ class CreatureActions:
         global new_grid
         global max_energy
         global max_age
-        global death_count
         global world_resources
-
-        utils = Utils()
-
-        # I traverse the dictionaries inside the functions instead of traverse the dictionaries and call different
-        # functions each time because it saves processing time
 
         # copy the keys so we can edit the population dictionaries. We do it this way so that we can also find the
         # max fitness and energy
@@ -724,7 +708,7 @@ class CreatureActions:
         self.creature_consume_food()
 
         # this first loop is for the creatures to have children first
-        death_count = self.reproduce(grid, population_keys, death_count)
+        self.reproduce(grid, population_keys)
 
         # then this second loop is to have the creatures and the kids to move about the world
         self.move_all_creatures(population_keys, hour)
@@ -812,9 +796,14 @@ class Utils:
         return keys
 
     @staticmethod
-    def display_info(img, indiv_fitness, selected_creature_id):
+    def display_info(img, past_pop_size):
+        global death_count
+
         # update data
         # print(f"Alive: {len(population)}\tDeath Count: {death_count}")
+        diff = past_pop_size - len(population)
+        death_count += diff if diff > 0 else 0
+
         plt.title(
             f"Y:D:H: {year}:{day}:{hour} - Alive: {drakonian_pop_size + gritis_pop_size:,} - Death Count: {death_count:,}",
             fontsize=14)
@@ -830,32 +819,35 @@ class Utils:
         img.set_data(new_grid)
 
 
-creature_actions = CreatureActions()
-user_actions = UserActions()
-utils = Utils()
-
-
 def update(frameNum, fig, img, grid):
     global new_grid
 
     # time.sleep(0.1)
 
-    indiv_fitness = 0
-    selected_creature_id = (-1, -1)
+    # indiv_fitness = 0
+    # selected_creature_id = (-1, -1)
 
-    # copy grid since we require 8 neighbors
-    # for calculation and we go line by line
+    pop_size = len(population)
+
     new_grid = grid.copy()
+
     creature_actions.update(grid) if not pause else None
 
     fig.canvas.mpl_connect('button_press_event', user_actions.onclick)
     fig.canvas.mpl_connect('key_press_event', user_actions.key_event)
-    user_actions.update_user_actions()
+    user_actions.update()
 
-    utils.display_info(img, indiv_fitness, selected_creature_id)
+    # utils.display_info(img, indiv_fitness, selected_creature_id)
+    utils.display_info(img, pop_size)
     grid[:] = new_grid[:]
 
     return img,
+
+
+creature_actions = CreatureActions()
+user_actions = UserActions()
+utils = Utils()
+generate = Generate()
 
 
 def main():
@@ -869,7 +861,7 @@ def main():
     # set animation update interval
     updateInterval = 1
     fig, ax = plt.subplots(constrained_layout=True)
-    img = ax.imshow(grid)
+    img = ax.imshow(grid, cmap="terrain")
 
     # show animation
     count = 0
